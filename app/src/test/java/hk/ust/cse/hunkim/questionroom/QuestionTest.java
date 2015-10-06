@@ -11,9 +11,8 @@ import hk.ust.cse.hunkim.questionroom.question.Question;
  * Created by hunkim on 7/15/15.
  */
 
-public class QuestionTest  extends TestCase {
+public class QuestionTest extends TestCase {
     Question q;
-
 
 
     protected void setUp() throws Exception {
@@ -31,16 +30,29 @@ public class QuestionTest  extends TestCase {
                 "How.about.this? Cool", "How.about.this?"
         };
 
-        for (int i=0; i<strHead.length; i+=2) {
+        for (int i = 0; i < strHead.length; i += 2) {
             String head = q.getFirstSentence(strHead[i]);
-            assertEquals("Chat.getFirstSentence", strHead[i+1], head);
+            assertEquals("Chat.getFirstSentence", strHead[i + 1], head);
         }
     }
 
     @SmallTest
-
     public void testHead() {
         assertEquals("Head", "Hello?", q.getHead());
     }
 
+    @SmallTest
+    public void testDesc() {
+        assertEquals("Desc", " This is very nice", q.getDesc());
+    }
+
+    @SmallTest
+    public void testEcho() {
+        assertEquals("Echo", 0, q.getEcho());
+    }
+
+    @SmallTest
+    public void testWholeMsg() {
+        assertEquals("WholeMsg", "Hello? This is very nice", q.getWholeMsg());
+    }
 }

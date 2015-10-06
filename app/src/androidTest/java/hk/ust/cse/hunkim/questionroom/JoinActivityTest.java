@@ -88,7 +88,7 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
         getInstrumentation().waitForIdleSync();
 
         //Send the room name
-        getInstrumentation().sendStringSync("all");
+        getInstrumentation().sendStringSync("comp3111");
         getInstrumentation().waitForIdleSync();
 
         //Click on the sendToReceiverButton to send the message to ReceiverActivity
@@ -120,9 +120,9 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
         Intent intent = mainActivity.getIntent();
         assertNotNull("Intent should be set", intent);
 
-        assertEquals("all", intent.getStringExtra(JoinActivity.ROOM_NAME));
+        assertEquals("comp3111", intent.getStringExtra(JoinActivity.ROOM_NAME));
 
-        assertEquals("This is set correctly", "Room name: all", mainActivity.getTitle());
+        assertEquals("This is set correctly", "Room name: comp3111", mainActivity.getTitle());
 
         //Unregister monitor for ReceiverActivity
         getInstrumentation().removeMonitor(receiverActivityMonitor);

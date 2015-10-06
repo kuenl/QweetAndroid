@@ -1,11 +1,7 @@
 package hk.ust.cse.hunkim.questionroom;
 
-import android.app.Activity;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 
 import com.firebase.client.ChildEventListener;
 import com.firebase.client.DataSnapshot;
@@ -28,12 +24,10 @@ import java.util.Map;
  * instance of your list item mLayout and an instance your class that holds your data. Simply populate the view however
  * you like and this class will handle updating the list as the data changes.
  */
-public abstract class FirebaseListAdapter<T> extends BaseAdapter {
+public abstract class FirebaseRecyclerViewAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private Query mRef;
     private Class<T> mModelClass;
-    private int mLayout;
-    private LayoutInflater mInflater;
     private List<T> mModels;
     private Map<String, T> mModelKeys;
     private ChildEventListener mListener;
@@ -42,15 +36,10 @@ public abstract class FirebaseListAdapter<T> extends BaseAdapter {
      * @param mRef        The Firebase location to watch for data changes. Can also be a slice of a location, using some
      *                    combination of <code>limit()</code>, <code>startAt()</code>, and <code>endAt()</code>,
      * @param mModelClass Firebase will marshall the data at a location into an instance of a class that you provide
-     * @param mLayout     This is the mLayout used to represent a single list item. You will be responsible for populating an
-     *                    instance of the corresponding view with the data from an instance of mModelClass.
-     * @param activity    The activity containing the ListView
      */
-    public FirebaseListAdapter(Query mRef, Class<T> mModelClass, int mLayout, Activity activity) {
+    public FirebaseRecyclerViewAdapter(Query mRef, Class<T> mModelClass) {
         this.mRef = mRef;
         this.mModelClass = mModelClass;
-        this.mLayout = mLayout;
-        mInflater = activity.getLayoutInflater();
         mModels = new ArrayList<T>();
         mModelKeys = new HashMap<String, T>();
 
@@ -59,7 +48,7 @@ public abstract class FirebaseListAdapter<T> extends BaseAdapter {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
 
-                T model = dataSnapshot.getValue(FirebaseListAdapter.this.mModelClass);
+                T model = dataSnapshot.getValue(FirebaseRecyclerViewAdapter.this.mModelClass);
 
                 String modelName = dataSnapshot.getKey();
                 mModelKeys.put(modelName, model);
@@ -93,7 +82,7 @@ public abstract class FirebaseListAdapter<T> extends BaseAdapter {
                 // One of the mModels changed. Replace it in our list and name mapping
                 String modelName = dataSnapshot.getKey();
                 T oldModel = mModelKeys.get(modelName);
-                T newModel = dataSnapshot.getValue(FirebaseListAdapter.this.mModelClass);
+                T newModel = dataSnapshot.getValue(FirebaseRecyclerViewAdapter.this.mModelClass);
 
                 // TOFIX: Any easy way to ser key?
                 setKey(modelName, newModel);
@@ -126,7 +115,7 @@ public abstract class FirebaseListAdapter<T> extends BaseAdapter {
                 // A model changed position in the list. Update our list accordingly
                 String modelName = dataSnapshot.getKey();
                 T oldModel = mModelKeys.get(modelName);
-                T newModel = dataSnapshot.getValue(FirebaseListAdapter.this.mModelClass);
+                T newModel = dataSnapshot.getValue(FirebaseRecyclerViewAdapter.this.mModelClass);
 
                 // TOFIX: Any easy way to ser key?
                 setKey(modelName, newModel);
@@ -163,13 +152,6 @@ public abstract class FirebaseListAdapter<T> extends BaseAdapter {
         mModelKeys.clear();
     }
 
-
-    @Override
-    public int getCount() {
-        return mModels.size();
-    }
-
-    @Override
     public T getItem(int i) {
         return mModels.get(i);
     }
@@ -179,39 +161,14 @@ public abstract class FirebaseListAdapter<T> extends BaseAdapter {
         return i;
     }
 
-    @Override
-    public View getView(int i, View view, ViewGroup viewGroup) {
-        if (view == null) {
-            view = mInflater.inflate(mLayout, viewGroup, false);
-        }
-
-        // FIXME: Perhaps this is the first time to show data
-        // Let's order the list
-        if (i == 0) {
-            sortModels(mModels);
-        }
-
-        // Let's get keys and models
-        T model = mModels.get(i);
-
-        // Call out to subclass to marshall this model into the provided view
-        populateView(view, model);
-        return view;
-    }
-
-    /**
-     * Each time the data at the given Firebase location changes, this method will be called for each item that needs
-     * to be displayed. The arguments correspond to the mLayout and mModelClass given to the constructor of this class.
-     * <p/>
-     * Your implementation should populate the view using the data contained in the model.
-     *
-     * @param v     The view to populate
-     * @param model The object containing the data used to populate the view
-     */
-    protected abstract void populateView(View v, T model);
-
     protected abstract void sortModels(List<T> mModels);
 
     protected abstract void setKey(String key, T model);
+
+    @Override
+    public int getItemCount() {
+        return mModels.size();
+    }
+
 
 }

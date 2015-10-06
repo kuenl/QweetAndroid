@@ -1,15 +1,13 @@
 package hk.ust.cse.hunkim.questionroom;
 
-import android.app.ListActivity;
+import android.app.Activity;
 import android.content.Intent;
-import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,92 +16,38 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
-import hk.ust.cse.hunkim.questionroom.db.DBHelper;
-import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 import hk.ust.cse.hunkim.questionroom.question.Question;
 
-public class MainActivity extends ListActivity {
-
-    // TODO: change this to your own Firebase URL
-    private static final String FIREBASE_URL = "https://incandescent-inferno-3017.firebaseio.com/";
+public class QuestionRoomActivity extends Activity {
 
     private String roomName;
     private Firebase mFirebaseRef;
     private ValueEventListener mConnectedListener;
-    private QuestionListAdapter mChatListAdapter;
+    private QuestionRecyclerViewAdapter mQuestionRecyclerViewAdapter;
 
-    private DBUtil dbutil;
-
-    public DBUtil getDbutil() {
-        return dbutil;
-    }
+    RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        //initialized once with an Android context.
-        Firebase.setAndroidContext(this);
-
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_question_room);
 
         Intent intent = getIntent();
         assert (intent != null);
 
-        // Make it a bit more reliable
         roomName = intent.getStringExtra(Constant.KEY_ROOM_NAME);
-        if (roomName == null || roomName.length() == 0) {
+        if (roomName == null || roomName.isEmpty()) {
             roomName = "all";
         }
 
-        setTitle("Room name: " + roomName);
+        Firebase.setAndroidContext(this);
 
-        // Setup our Firebase mFirebaseRef
-        mFirebaseRef = new Firebase(FIREBASE_URL).child(roomName).child("questions");
+        mFirebaseRef = new Firebase(Constant.FIREBASE_URL).child(roomName).child("questions");
 
-        // Setup our input methods. Enter key on the keyboard or pushing the send button
-        EditText inputText = (EditText) findViewById(R.id.messageInput);
-        inputText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                if (actionId == EditorInfo.IME_NULL && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                    sendMessage();
-                }
-                return true;
-            }
-        });
-
-        findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendMessage();
-            }
-        });
-
-        // get the DB Helper
-        DBHelper mDbHelper = new DBHelper(this);
-        dbutil = new DBUtil(mDbHelper);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        // Setup our view and list adapter. Ensure it scrolls to the bottom as data changes
-        final ListView listView = getListView();
-        // Tell our list adapter that we only want 200 messages at a time
-        mChatListAdapter = new QuestionListAdapter(
-                mFirebaseRef.orderByChild("echo").limitToFirst(200),
-                this, R.layout.question, roomName);
-        listView.setAdapter(mChatListAdapter);
-
-        mChatListAdapter.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                listView.setSelection(mChatListAdapter.getCount() - 1);
-            }
-        });
+        mRecyclerView = (RecyclerView) findViewById(R.id.questionRecyclerView);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mQuestionRecyclerViewAdapter = new QuestionRecyclerViewAdapter(
+                mFirebaseRef.orderByChild("echo").limitToFirst(200), this);
 
         // Finally, a little indication of connection status
         mConnectedListener = mFirebaseRef.getRoot().child(".info/connected").addValueEventListener(new ValueEventListener() {
@@ -111,9 +55,9 @@ public class MainActivity extends ListActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 boolean connected = (Boolean) dataSnapshot.getValue();
                 if (connected) {
-                    Toast.makeText(MainActivity.this, "Connected to Firebase", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(QuestionRoomActivity.this, "Connected to Firebase", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(MainActivity.this, "Disconnected from Firebase", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(QuestionRoomActivity.this, "Disconnected from Firebase", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -122,13 +66,25 @@ public class MainActivity extends ListActivity {
                 // No-op
             }
         });
+
+        mRecyclerView.setAdapter(mQuestionRecyclerViewAdapter);
+
+        ((TextView)findViewById(R.id.postQuestionTextView)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.putExtra(Constant.KEY_ROOM_NAME, roomName);
+                intent.setClass(QuestionRoomActivity.this, NewQuestionActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         mFirebaseRef.getRoot().child(".info/connected").removeEventListener(mConnectedListener);
-        mChatListAdapter.cleanup();
+        mQuestionRecyclerViewAdapter.cleanup();
     }
 
     private void sendMessage() {
@@ -136,7 +92,7 @@ public class MainActivity extends ListActivity {
         String input = inputText.getText().toString();
         if (!input.equals("")) {
             // Create our 'model', a Chat object
-            Question question = new Question(input);
+            Question question = new Question("", input);
             // Create a new, auto-generated child of that chat location, and save our chat data there
             mFirebaseRef.push().setValue(question);
             inputText.setText("");
@@ -144,10 +100,6 @@ public class MainActivity extends ListActivity {
     }
 
     public void updateEcho(String key) {
-        if (dbutil.contains(key)) {
-            Log.e("Dupkey", "Key is already in the DB!");
-            return;
-        }
 
         final Firebase echoRef = mFirebaseRef.child(key).child("echo");
         echoRef.addListenerForSingleValueEvent(
@@ -185,8 +137,6 @@ public class MainActivity extends ListActivity {
                 }
         );
 
-        // Update SQLite DB
-        dbutil.put(key);
     }
 
     public void Close(View view) {

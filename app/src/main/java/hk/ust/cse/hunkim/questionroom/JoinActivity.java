@@ -3,10 +3,12 @@ package hk.ust.cse.hunkim.questionroom;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.os.Handler;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 
 
@@ -14,21 +16,30 @@ import android.widget.TextView;
  * A login screen that offers login via email/password.
  */
 public class JoinActivity extends Activity {
-    public static final String ROOM_NAME = "Room_name";
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     // UI references.
-    private TextView roomNameView;
+    private AutoCompleteTextView roomNameView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        requestWindowFeature(Window.FEATURE_ACTION_BAR);
+        Handler h = new Handler();
+        h.post(new Runnable() {
+            @Override
+            public void run() {
+                getActionBar().hide();
+            }
+        });
+
         setContentView(R.layout.activity_join);
 
 
         // Set up the login form.
-        roomNameView = (TextView) findViewById(R.id.room_name);
+        roomNameView = (AutoCompleteTextView) findViewById(R.id.room_name);
 
         roomNameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -54,16 +65,15 @@ public class JoinActivity extends Activity {
         // Store values at the time of the login attempt.
         String room_name = roomNameView.getText().toString();
 
-        boolean cancel = false;
+        boolean cancel = true;
 
-        // Check for a valid email address.
-        if (TextUtils.isEmpty(room_name)) {
+        // Check for a valid room name.
+        if (room_name.isEmpty()) {
             roomNameView.setError(getString(R.string.error_field_required));
-
-            cancel = true;
-        } else if (!isEmailValid(room_name)) {
+        } else if (!isRoomNameValid(room_name)) {
             roomNameView.setError(getString(R.string.error_invalid_room_name));
-            cancel = true;
+        } else {
+            cancel = false;
         }
 
         if (cancel) {
@@ -71,13 +81,13 @@ public class JoinActivity extends Activity {
             roomNameView.requestFocus();
         } else {
             // Start main activity
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.putExtra(ROOM_NAME, room_name);
+            Intent intent = new Intent(this, QuestionRoomActivity.class);
+            intent.putExtra(Constant.KEY_ROOM_NAME, room_name);
             startActivity(intent);
         }
     }
 
-    private boolean isEmailValid(String room_name) {
+    private boolean isRoomNameValid(String room_name) {
         // http://stackoverflow.com/questions/8248277
         // Make sure alphanumeric characters
         return !room_name.matches("^.*[^a-zA-Z0-9 ].*$");

@@ -43,6 +43,7 @@ public class Question implements Comparable<Question> {
 
     /**
      * Set question from a String message
+     *
      * @param message string message
      */
     public Question(String message) {
@@ -60,8 +61,25 @@ public class Question implements Comparable<Question> {
         this.timestamp = new Date().getTime();
     }
 
+    public Question(String title, String message) {
+        this.wholeMsg = message;
+        this.echo = 0;
+        this.head = getFirstSentence(message).trim();
+        this.desc = "";
+        if (this.head.length() < message.length()) {
+            this.desc = message.substring(this.head.length());
+        }
+
+        // get the last char
+        //this.headLastChar = head.substring(head.length() - 1);
+        this.headLastChar = "";
+
+        this.timestamp = new Date().getTime();
+    }
+
     /**
      * Get first sentence from a message
+     *
      * @param message
      * @return
      */
@@ -87,7 +105,7 @@ public class Question implements Comparable<Question> {
             return message;
         }
 
-        return message.substring(0, index+1);
+        return message.substring(0, index + 1);
     }
 
     /* -------------------- Getters ------------------- */
@@ -149,6 +167,7 @@ public class Question implements Comparable<Question> {
 
     /**
      * New one/high echo goes bottom
+     *
      * @param other other chat
      * @return order
      */
@@ -175,11 +194,13 @@ public class Question implements Comparable<Question> {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Question)) {
-            return false;
+        if (o != null && o instanceof Question) {
+            Question other = (Question) o;
+            if (key!= null && other.key != null) {
+                return key.equals(other.key);
+            }
         }
-        Question other = (Question)o;
-        return key.equals(other.key);
+        return false;
     }
 
     @Override
