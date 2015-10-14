@@ -1,11 +1,20 @@
 package hk.ust.cse.hunkim.questionroom;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.SearchView.OnQueryTextListener;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -16,14 +25,18 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
+import hk.ust.cse.hunkim.questionroom.db.DBHelper;
+import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 import hk.ust.cse.hunkim.questionroom.question.Question;
 
-public class QuestionRoomActivity extends Activity {
+public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTextListener{
 
     private String roomName;
     private Firebase mFirebaseRef;
     private ValueEventListener mConnectedListener;
     private QuestionRecyclerViewAdapter mQuestionRecyclerViewAdapter;
+    private DBUtil dbutil;
+
 
     RecyclerView mRecyclerView;
 
@@ -37,6 +50,11 @@ public class QuestionRoomActivity extends Activity {
 
         roomName = intent.getStringExtra(Constant.KEY_ROOM_NAME);
         if (roomName == null || roomName.isEmpty()) {
+            roomName = "all";
+        }
+
+        boolean newRoom = intent.getBooleanExtra(Constant.KEY_ROOM_NEW, false);
+        if (newRoom) {
             roomName = "all";
         }
 
@@ -69,7 +87,7 @@ public class QuestionRoomActivity extends Activity {
 
         mRecyclerView.setAdapter(mQuestionRecyclerViewAdapter);
 
-        ((TextView)findViewById(R.id.postQuestionTextView)).setOnClickListener(new View.OnClickListener() {
+        ((TextView) findViewById(R.id.postQuestionTextView)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent();
@@ -78,6 +96,55 @@ public class QuestionRoomActivity extends Activity {
                 startActivity(intent);
             }
         });
+
+        DBHelper mDbHelper = new DBHelper(this);
+        dbutil = new DBUtil(mDbHelper);
+
+
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle(roomName);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_question_room, menu);
+        MenuItem searchItem = menu.findItem(R.id.search);
+        SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        mSearchView.setOnQueryTextListener(this);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent upIntent = NavUtils.getParentActivityIntent(this);
+                if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
+                    TaskStackBuilder.create(this)
+                            .addNextIntentWithParentStack(upIntent)
+                            .startActivities();
+                } else {
+                    upIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    NavUtils.navigateUpTo(this, upIntent);
+                }
+                return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        Toast.makeText(this, query, Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        return false;
     }
 
     @Override
@@ -85,6 +152,10 @@ public class QuestionRoomActivity extends Activity {
         super.onDestroy();
         mFirebaseRef.getRoot().child(".info/connected").removeEventListener(mConnectedListener);
         mQuestionRecyclerViewAdapter.cleanup();
+    }
+
+    public DBUtil getDbutil() {
+        return dbutil;
     }
 
     private void sendMessage() {
@@ -99,17 +170,19 @@ public class QuestionRoomActivity extends Activity {
         }
     }
 
-    public void updateEcho(String key) {
-
-        final Firebase echoRef = mFirebaseRef.child(key).child("echo");
-        echoRef.addListenerForSingleValueEvent(
+    public void updateLike(String key, final boolean add) {
+        final Firebase likeRef = mFirebaseRef.child(key).child("like");
+        likeRef.addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        Long echoValue = (Long) dataSnapshot.getValue();
-                        Log.e("Echo update:", "" + echoValue);
-
-                        echoRef.setValue(echoValue + 1);
+                        Long likeValue = (Long) dataSnapshot.getValue();
+                        Log.e("Echo update:", "" + likeValue);
+                        if (add) {
+                            likeRef.setValue(likeValue + 1);
+                        } else {
+                            likeRef.setValue(likeValue - 1);
+                        }
                     }
 
                     @Override
@@ -118,16 +191,21 @@ public class QuestionRoomActivity extends Activity {
                     }
                 }
         );
+    }
 
-        final Firebase orderRef = mFirebaseRef.child(key).child("order");
-        orderRef.addListenerForSingleValueEvent(
+    public void updateDislike(String key, final boolean add) {
+        final Firebase dislikeRef = mFirebaseRef.child(key).child("dislike");
+        dislikeRef.addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        Long orderValue = (Long) dataSnapshot.getValue();
-                        Log.e("Order update:", "" + orderValue);
-
-                        orderRef.setValue(orderValue - 1);
+                        Long dislikeValue = (Long) dataSnapshot.getValue();
+                        Log.e("Echo update:", "" + dislikeValue);
+                        if (add) {
+                            dislikeRef.setValue(dislikeValue + 1);
+                        } else {
+                            dislikeRef.setValue(dislikeValue - 1);
+                        }
                     }
 
                     @Override
@@ -136,7 +214,6 @@ public class QuestionRoomActivity extends Activity {
                     }
                 }
         );
-
     }
 
     public void Close(View view) {

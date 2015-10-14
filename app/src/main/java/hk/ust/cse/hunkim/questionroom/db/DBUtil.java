@@ -15,44 +15,46 @@ public class DBUtil {
         this.helper = helper;
     }
 
-    public long put(String key) {
+    public long put(String key, String action) {
 
         // Gets the data repository in write mode
         SQLiteDatabase db = helper.getWritableDatabase();
 
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
-        values.put(DBHelper.KEY_NAME, key);
+        values.put(DBHelper.COL_ACTION_HISTORY_KEY_NAME, key);
+        values.put(DBHelper.COL_ACTION_HISTORY_ACTION_NAME, action);
 
         return db.insert(
-                DBHelper.TABLE_NAME,
-                DBHelper.KEY_NAME,
+                DBHelper.TABLE_ACTION_HISTORY_NAME,
+                null,
                 values);
     }
 
 
-    public boolean contains(String key) {
+    public boolean contains(String key, String action) {
         // Gets the data repository in write mode
         SQLiteDatabase db = helper.getReadableDatabase();
         Cursor c = db.rawQuery(
-                "SELECT 1 FROM " + DBHelper.TABLE_NAME +
-                        " WHERE " + DBHelper.KEY_NAME +
-                        " = ?", new String[]{key});
-
+                "SELECT 1 FROM " + DBHelper.TABLE_ACTION_HISTORY_NAME +
+                        " WHERE " + DBHelper.COL_ACTION_HISTORY_KEY_NAME +
+                        " = ? AND " + DBHelper.COL_ACTION_HISTORY_ACTION_NAME +
+                        " = ?", new String[]{key, action});
         boolean exists = c.moveToFirst();
         c.close();
         return exists;
     }
 
-    public void delete(String key) {
+    public void delete(String key, String action) {
         // Gets the data repository in write mode
         SQLiteDatabase db = helper.getWritableDatabase();
 
         // Define 'where' part of query.
-        String selection = DBHelper.KEY_NAME + " = ?";
+        String selection = DBHelper.COL_ACTION_HISTORY_KEY_NAME + " = ? AND " +
+                DBHelper.COL_ACTION_HISTORY_ACTION_NAME + " = ?";
         // Specify arguments in placeholder order.
-        String[] selectionArgs = {key};
+        String[] selectionArgs = {key, action};
         // Issue SQL statement.
-        db.delete(DBHelper.TABLE_NAME, selection, selectionArgs);
+        db.delete(DBHelper.TABLE_ACTION_HISTORY_NAME, selection, selectionArgs);
     }
 }

@@ -25,7 +25,7 @@ import java.util.Map;
  * you like and this class will handle updating the list as the data changes.
  */
 public abstract class FirebaseRecyclerViewAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-
+private static String TAG = "FirebaseRecyclerViewAdapter";
     private Query mRef;
     private Class<T> mModelClass;
     private List<T> mModels;
@@ -139,7 +139,7 @@ public abstract class FirebaseRecyclerViewAdapter<T> extends RecyclerView.Adapte
 
             @Override
             public void onCancelled(FirebaseError firebaseError) {
-                Log.e("FirebaseListAdapter", "Listen was cancelled, no more updates will occur");
+                Log.e(TAG, "Listen was cancelled, no more updates will occur");
             }
 
         });

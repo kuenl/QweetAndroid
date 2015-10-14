@@ -9,14 +9,16 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class DBHelper extends SQLiteOpenHelper {
 
-    public static final String TABLE_NAME = "echoed";
-    public static final String KEY_NAME = "key";
+    public static final String TABLE_ACTION_HISTORY_NAME = "actionHistory";
+    public static final String COL_ACTION_HISTORY_KEY_NAME = "key";
+    public static final String COL_ACTION_HISTORY_ACTION_NAME = "action";
+
 
     private static final String SQL_CREATE_ENTRIES =
-            "CREATE TABLE " + TABLE_NAME + " (" + KEY_NAME + " TEXT UNIQUE)";
+            "CREATE TABLE " + TABLE_ACTION_HISTORY_NAME + " (" + COL_ACTION_HISTORY_KEY_NAME + " TEXT, "+ COL_ACTION_HISTORY_ACTION_NAME + " TEXT)";
 
     private static final String SQL_DELETE_ENTRIES =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
+            "DROP TABLE IF EXISTS " + TABLE_ACTION_HISTORY_NAME;
 
     // If you change the database schema, you must increment the database version.
     public static final int DATABASE_VERSION = 1;

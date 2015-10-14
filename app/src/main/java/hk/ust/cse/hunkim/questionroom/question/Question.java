@@ -12,149 +12,32 @@ public class Question implements Comparable<Question> {
      * Each must have getters
      */
     private String key;
-    private String wholeMsg;
-    private String head;
-    private String headLastChar;
-    private String desc;
-    private String linkedDesc;
-    private boolean completed;
+    private String message;
+    private String title;
     private long timestamp;
-    private String tags;
-    private int echo;
-    private int order;
-    private boolean newQuestion;
-
-    public String getDateString() {
-        return dateString;
-    }
-
-    private String dateString;
-
-    public String getTrustedDesc() {
-        return trustedDesc;
-    }
-
-    private String trustedDesc;
+    private String[] tags;
+    private int like;
+    private int dislike;
 
     // Required default constructor for Firebase object mapping
     @SuppressWarnings("unused")
     private Question() {
     }
 
-    /**
-     * Set question from a String message
-     *
-     * @param message string message
-     */
-    public Question(String message) {
-        this.wholeMsg = message;
-        this.echo = 0;
-        this.head = getFirstSentence(message).trim();
-        this.desc = "";
-        if (this.head.length() < message.length()) {
-            this.desc = message.substring(this.head.length());
-        }
-
-        // get the last char
-        this.headLastChar = head.substring(head.length() - 1);
-
-        this.timestamp = new Date().getTime();
-    }
-
     public Question(String title, String message) {
-        this.wholeMsg = message;
-        this.echo = 0;
-        this.head = getFirstSentence(message).trim();
-        this.desc = "";
-        if (this.head.length() < message.length()) {
-            this.desc = message.substring(this.head.length());
-        }
-
-        // get the last char
-        //this.headLastChar = head.substring(head.length() - 1);
-        this.headLastChar = "";
-
+        this.title = title;
+        this.message = message;
+        this.like = 0;
+        this.dislike = 0;
         this.timestamp = new Date().getTime();
     }
 
-    /**
-     * Get first sentence from a message
-     *
-     * @param message
-     * @return
-     */
-    public static String getFirstSentence(String message) {
-        String[] tokens = {". ", "? ", "! "};
-
-        int index = -1;
-
-        for (String token : tokens) {
-            int i = message.indexOf(token);
-            if (i == -1) {
-                continue;
-            }
-
-            if (index == -1) {
-                index = i;
-            } else {
-                index = Math.min(i, index);
-            }
-        }
-
-        if (index == -1) {
-            return message;
-        }
-
-        return message.substring(0, index + 1);
+    public int getDislike() {
+        return dislike;
     }
 
-    /* -------------------- Getters ------------------- */
-    public String getHead() {
-        return head;
-    }
-
-    public String getDesc() {
-        return desc;
-    }
-
-    public int getEcho() {
-        return echo;
-    }
-
-    public String getWholeMsg() {
-        return wholeMsg;
-    }
-
-    public String getHeadLastChar() {
-        return headLastChar;
-    }
-
-    public String getLinkedDesc() {
-        return linkedDesc;
-    }
-
-    public boolean isCompleted() {
-        return completed;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public String getTags() {
-        return tags;
-    }
-
-    public int getOrder() {
-        return order;
-    }
-
-    public boolean isNewQuestion() {
-        return newQuestion;
-    }
-
-    public void updateNewQuestion() {
-        newQuestion = this.timestamp > new Date().getTime() - 180000;
+    public void setDislike(int dislike) {
+        this.dislike = dislike;
     }
 
     public String getKey() {
@@ -165,6 +48,46 @@ public class Question implements Comparable<Question> {
         this.key = key;
     }
 
+    public int getLike() {
+        return like;
+    }
+
+    public void setLike(int like) {
+        this.like = like;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String[] getTags() {
+        return tags;
+    }
+
+    public void setTags(String[] tags) {
+        this.tags = tags;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     /**
      * New one/high echo goes bottom
      *
@@ -173,22 +96,14 @@ public class Question implements Comparable<Question> {
      */
     @Override
     public int compareTo(Question other) {
-        // Push new on top
-        other.updateNewQuestion(); // update NEW button
-        this.updateNewQuestion();
 
-        if (this.newQuestion != other.newQuestion) {
-            return this.newQuestion ? 1 : -1; // this is the winner
-        }
-
-
-        if (this.echo == other.echo) {
+        if (this.like == other.like) {
             if (other.timestamp == this.timestamp) {
                 return 0;
             }
             return other.timestamp > this.timestamp ? -1 : 1;
         }
-        return this.echo - other.echo;
+        return this.like - other.like;
     }
 
 
