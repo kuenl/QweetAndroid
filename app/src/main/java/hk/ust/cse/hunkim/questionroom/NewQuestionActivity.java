@@ -1,15 +1,24 @@
 package hk.ust.cse.hunkim.questionroom;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore.Images.Media;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.firebase.client.DataSnapshot;
@@ -17,28 +26,47 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import hk.ust.cse.hunkim.questionroom.question.Question;
 
 public class NewQuestionActivity extends AppCompatActivity {
 
-
     private Firebase mFirebaseRef;
     private String roomName;
 
-    private ValueEventListener mConnectedListener;
-    private EditText titleEditText;
-    private EditText questionEditText;
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
+    @Bind(R.id.titleEditText)
+    EditText titleEditText;
+    @Bind(R.id.questionEditText)
+    EditText questionEditText;
+    @Bind(R.id.pollItemRecyclerView)
+    RecyclerView pollItemRecyclerView;
+    @Bind(R.id.imageView)
+    ImageView imageView;
+
     private List<String> pollItemList;
+    private NewPollRecyclerViewAdapter adapter;
+
+    private ValueEventListener mConnectedListener;
+
+    private Bundle bundle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_question);
-        titleEditText = (EditText) findViewById(R.id.titleEditText);
-        questionEditText = (EditText) findViewById(R.id.questionEditText);
+        ButterKnife.bind(this);
+
+        setSupportActionBar(toolbar);
 
         Intent intent = getIntent();
         roomName = intent.getStringExtra(Constant.KEY_ROOM_NAME);
@@ -68,18 +96,72 @@ public class NewQuestionActivity extends AppCompatActivity {
         });
 
         pollItemList = new ArrayList<>();
-        final NewPollRecyclerViewAdapter adapter = new NewPollRecyclerViewAdapter(pollItemList);
-        RecyclerView pollItemRecyclerView = (RecyclerView) findViewById(R.id.pollItemRecyclerView);
+        adapter = new NewPollRecyclerViewAdapter(pollItemList);
         pollItemRecyclerView.setAdapter(adapter);
         pollItemRecyclerView.setLayoutManager(new NewPollRecyclerViewLayoutManager(this));
-        LinearLayout addPollItemButton = (LinearLayout) findViewById(R.id.addPollItemButton);
-        addPollItemButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                pollItemList.add("");
-                adapter.notifyDataSetChanged();
+
+        bundle = new Bundle();
+    }
+
+    @OnClick(R.id.addPollItemButton)
+    public void onClick() {
+        pollItemList.add("");
+        adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_new_question, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+            case R.id.addImageItem:
+                new AddImageDialog(this, bundle).show();
+                return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == AddImageDialog.REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            try {
+                Uri uri = bundle.getParcelable("data");
+                Bitmap imageBitmap = Media.getBitmap(this.getContentResolver(), uri);
+                imageView.setImageBitmap(imageBitmap);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        });
+        } else if (requestCode == AddImageDialog.REQUEST_CHOOSE_IMAGE && resultCode == Activity.RESULT_OK) {
+            if (data == null) {
+                Toast.makeText(this, "Image in not valid.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(data.getData());
+                Bitmap imageBitmap = BitmapFactory.decodeStream(inputStream);
+                imageView.setImageBitmap(imageBitmap);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else if (requestCode == AddImageDialog.REQUEST_DRAW_DRAWING && resultCode == RESULT_OK) {
+            try {
+                Uri uri = bundle.getParcelable("data");
+                Bitmap imageBitmap = Media.getBitmap(this.getContentResolver(), uri);
+                imageView.setImageBitmap(imageBitmap);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -110,9 +192,7 @@ public class NewQuestionActivity extends AppCompatActivity {
         }
     }
 
-    private class NewPollRecyclerViewLayoutManager extends LinearLayoutManager
-
-    {
+    private class NewPollRecyclerViewLayoutManager extends LinearLayoutManager {
         private int[] mMeasuredDimension = new int[2];
 
         public NewPollRecyclerViewLayoutManager(Context context) {

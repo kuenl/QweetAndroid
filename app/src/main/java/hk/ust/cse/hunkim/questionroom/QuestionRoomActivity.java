@@ -5,19 +5,18 @@ import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.SearchView.OnQueryTextListener;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.client.DataSnapshot;
@@ -25,11 +24,14 @@ import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import hk.ust.cse.hunkim.questionroom.db.DBHelper;
 import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 import hk.ust.cse.hunkim.questionroom.question.Question;
 
-public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTextListener{
+public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTextListener {
 
     private String roomName;
     private Firebase mFirebaseRef;
@@ -37,13 +39,16 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
     private QuestionRecyclerViewAdapter mQuestionRecyclerViewAdapter;
     private DBUtil dbutil;
 
-
+    @Bind(R.id.questionRecyclerView)
     RecyclerView mRecyclerView;
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_question_room);
+        ButterKnife.bind(this);
 
         Intent intent = getIntent();
         assert (intent != null);
@@ -58,11 +63,13 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
             roomName = "all";
         }
 
+        toolbar.setTitle(roomName);
+        setSupportActionBar(toolbar);
+
         Firebase.setAndroidContext(this);
 
         mFirebaseRef = new Firebase(Constant.FIREBASE_URL).child(roomName).child("questions");
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.questionRecyclerView);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mQuestionRecyclerViewAdapter = new QuestionRecyclerViewAdapter(
                 mFirebaseRef.orderByChild("echo").limitToFirst(200), this);
@@ -87,24 +94,17 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
 
         mRecyclerView.setAdapter(mQuestionRecyclerViewAdapter);
 
-        ((TextView) findViewById(R.id.postQuestionTextView)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.putExtra(Constant.KEY_ROOM_NAME, roomName);
-                intent.setClass(QuestionRoomActivity.this, NewQuestionActivity.class);
-                startActivity(intent);
-            }
-        });
-
         DBHelper mDbHelper = new DBHelper(this);
         dbutil = new DBUtil(mDbHelper);
 
+    }
 
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setTitle(roomName);
-        actionBar.setDisplayHomeAsUpEnabled(true);
-
+    @OnClick(R.id.fab)
+    public void onFabClick() {
+        Intent intent = new Intent();
+        intent.putExtra(Constant.KEY_ROOM_NAME, roomName);
+        intent.setClass(QuestionRoomActivity.this, NewQuestionActivity.class);
+        startActivity(intent);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
         MenuItem searchItem = menu.findItem(R.id.search);
         SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
         mSearchView.setOnQueryTextListener(this);
-        return super.onCreateOptionsMenu(menu);
+        return true;
     }
 
     @Override

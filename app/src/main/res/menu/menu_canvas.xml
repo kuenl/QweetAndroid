@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/item_undo"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="Undo"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/item_clear"
+        android:icon="@android:drawable/ic_menu_close_clear_cancel"
+        android:title="Clear"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/item_done"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Done"
+        app:showAsAction="ifRoom" />
+</menu>

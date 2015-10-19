@@ -2,8 +2,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/switchType"
-        android:icon="@drawable/ic_menu_search_mtrl_alpha"
-        android:title="Switch to poll"
+        android:id="@+id/addImageItem"
+        android:icon="@android:drawable/ic_menu_camera"
+        android:title="Add image"
         app:showAsAction="ifRoom" />
 </menu>

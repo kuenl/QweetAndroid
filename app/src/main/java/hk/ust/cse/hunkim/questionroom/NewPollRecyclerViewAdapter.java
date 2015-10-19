@@ -6,12 +6,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+
 /**
- * Created by Administrator on 7/10/2015.
+ * An Adapter used for listing polling options while creating new question.
+ * Created by Leung Pui Kuen on 7/10/2015.
  */
 public class NewPollRecyclerViewAdapter extends
         RecyclerView.Adapter<NewPollRecyclerViewAdapter.ViewHolder> {
@@ -36,9 +41,29 @@ public class NewPollRecyclerViewAdapter extends
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, final int position) {
         String item = itemList.get(position);
         holder.setText(position, item);
+        holder.deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                holder.itemDescription.clearFocus();
+                itemList.remove(position);
+                notifyDataSetChanged();
+                // notifyItemRemoved(position);
+            }
+        });
+        holder.itemDescription.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) {
+                    holder.deleteButton.setVisibility(View.VISIBLE);
+                } else {
+                    holder.deleteButton.setVisibility(View.INVISIBLE);
+                    itemList.set(position, ((EditText) v).getText().toString());
+                }
+            }
+        });
     }
 
     // Return the total count of items
@@ -48,20 +73,21 @@ public class NewPollRecyclerViewAdapter extends
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-
-        private TextView itemNumber;
-        private EditText itemDescription;
-        private TextView deleteButton;
+        @Bind(R.id.pollItemNumberTextView)
+        TextView itemNumber;
+        @Bind(R.id.pollItemEditText)
+        EditText itemDescription;
+        @Bind(R.id.pollItemDeleteImageButton)
+        ImageButton deleteButton;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            itemNumber = (TextView) itemView.findViewById(R.id.pollItemNumberTextView);
-            itemDescription = (EditText) itemView.findViewById(R.id.pollItemEditText);
-            deleteButton = (TextView) itemView.findViewById(R.id.pollItemDeleteTextView);
+            ButterKnife.bind(this, itemView);
         }
 
         public void setText(int index, String item) {
-            itemNumber.setText(String.valueOf(index + 1) + '.');
+            String indexStr = String.valueOf(index + 1) + ".";
+            itemNumber.setText(indexStr);
             itemDescription.setText(item);
         }
     }

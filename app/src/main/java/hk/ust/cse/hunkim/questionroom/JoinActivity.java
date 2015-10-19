@@ -7,14 +7,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.ImageButton;
-import android.widget.TextView;
-import android.widget.TextView.OnEditorActionListener;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -28,6 +23,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.OnEditorAction;
+
 
 /**
  * A login screen that offers login via email/password.
@@ -38,38 +38,36 @@ public class JoinActivity extends AppCompatActivity {
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     // UI references.
-    private AutoCompleteTextView roomNameView;
+    @Bind(R.id.room_name)
+    AutoCompleteTextView roomNameView;
+
+    List<String> rooms;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getSupportActionBar().hide();
-
         setContentView(R.layout.activity_join);
-
-        // Set up the login form.
-        roomNameView = (AutoCompleteTextView) findViewById(R.id.room_name);
-        roomNameView.setOnEditorActionListener(new OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                if (actionId == EditorInfo.IME_ACTION_SEND) {
-                    attemptJoin();
-                }
-                return true;
-            }
-        });
-
-        ImageButton sendBtn = (ImageButton) findViewById(R.id.joinButton);
-        sendBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                attemptJoin();
-            }
-        });
-
+        ButterKnife.bind(this);
+        rooms = new ArrayList<>();
         new GetRoomListTask().execute();
     }
+
+    @SuppressWarnings("unused")
+    @OnClick(R.id.joinButton)
+    void onClick() {
+        attemptJoin();
+    }
+
+    @SuppressWarnings("unused")
+    @OnEditorAction(R.id.room_name)
+    boolean onEditorAction(int actionId) {
+        if (actionId == EditorInfo.IME_ACTION_SEND) {
+            attemptJoin();
+        }
+        return true;
+    }
+
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -105,13 +103,26 @@ public class JoinActivity extends AppCompatActivity {
     }
 
     private boolean isRoomNameValid(String room_name) {
-        // http://stackoverflow.com/questions/8248277
-        // Make sure alphanumeric characters
-        return !room_name.matches("^.*[^a-zA-Z0-9 ].*$");
+        return room_name.matches("^[0-9a-zA-Z]+$");
+    }
+
+    private void updateSuggestionList(JSONArray jsonArray) {
+        if (jsonArray != null) {
+            rooms.clear();
+            for (int i = 0; i < jsonArray.length(); i++) {
+                try {
+                    rooms.add(jsonArray.getJSONObject(i).getString("roomName"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_dropdown_item_1line, rooms);
+            roomNameView.setAdapter(adapter);
+        }
     }
 
     private class GetRoomListTask extends AsyncTask<Void, Void, JSONArray> {
-
         @Override
         protected JSONArray doInBackground(Void... params) {
             return getList();
@@ -139,19 +150,7 @@ public class JoinActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(JSONArray jsonArray) {
-            if (jsonArray != null) {
-                List<String> array = new ArrayList<>();
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    try {
-                        array.add(jsonArray.getJSONObject(i).getString("roomName"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(JoinActivity.this,
-                        android.R.layout.simple_dropdown_item_1line, array);
-                roomNameView.setAdapter(adapter);
-            }
+            updateSuggestionList(jsonArray);
         }
     }
 
