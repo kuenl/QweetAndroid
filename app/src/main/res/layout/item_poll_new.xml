@@ -7,26 +7,27 @@
     <TextView
         android:id="@+id/pollItemNumberTextView"
         android:layout_width="wrap_content"
-        android:minWidth="20dp"
         android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:gravity="right" />
+        android:gravity="right"
+        android:minWidth="20dp"
+        android:textStyle="bold" />
 
     <EditText
         android:id="@+id/pollItemEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:maxLines="1"
+        android:singleLine="true" />
 
     <ImageButton
         android:id="@+id/pollItemDeleteImageButton"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:src="@drawable/dialog_ic_close_normal_holo_light"
+        android:adjustViewBounds="true"
         android:background="#00000000"
-        android:padding="8dp"
-        android:visibility="invisible"
         android:scaleType="centerInside"
-        android:adjustViewBounds="true" />
+        android:src="@drawable/ic_highlight_off_black_24dp"
+        android:visibility="invisible" />
 
 </LinearLayout>

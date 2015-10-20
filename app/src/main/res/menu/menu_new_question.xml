@@ -6,4 +6,9 @@
         android:icon="@android:drawable/ic_menu_camera"
         android:title="Add image"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/okItem"
+        android:icon="@android:drawable/ic_menu_send"
+        android:title="Ok"
+        app:showAsAction="ifRoom" />
 </menu>
