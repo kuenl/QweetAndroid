@@ -1,8 +1,8 @@
 package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,9 +16,13 @@ import com.firebase.client.Query;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import hk.ust.cse.hunkim.questionroom.db.DBUtil;
-import hk.ust.cse.hunkim.questionroom.question.Question;
+import hk.ust.cse.hunkim.questionroom.datamodel.Question;
 
 /**
  * Created by Administrator on 24/9/15.
@@ -51,7 +55,7 @@ public class QuestionRecyclerViewAdapter extends FirebaseRecyclerViewAdapter<Que
 
     @Override
     protected void setKey(String key, Question model) {
-        model.setKey(key);
+        model.setId(key);
     }
 
     @Override
@@ -70,47 +74,86 @@ public class QuestionRecyclerViewAdapter extends FirebaseRecyclerViewAdapter<Que
         Question question = getItem(position);
         if (holder instanceof NoteViewHolder) {
             final NoteViewHolder castedHolder = (NoteViewHolder) holder;
-            castedHolder.setTitle(question.getTitle());
+            castedHolder.setTitle(question.getHeadline());
             castedHolder.setQuestion(question.getMessage());
-            castedHolder.setSummary(question.getLike(), question.getDislike(), 0);
-            castedHolder.setTime(question.getTimestamp());
-            if (dbUtil.contains(question.getKey(), "like")) {
-                castedHolder.setLikeButtonState(true);
+            castedHolder.setSummary(question.getUpVote(), question.getDownVote(), 0);
+            //castedHolder.setTime(question.getCreatedAt());
+            if (dbUtil.contains(question.getId(), "like")) {
+                setButtonState(castedHolder.mLikeButton, true);
+                setButtonState(castedHolder.mDislikeButton, false);
+            } else if (dbUtil.contains(question.getId(), "dislike")) {
+                setButtonState(castedHolder.mLikeButton, false);
+                setButtonState(castedHolder.mDislikeButton, true);
+            } else {
+                setButtonState(castedHolder.mLikeButton, false);
+                setButtonState(castedHolder.mDislikeButton, false);
             }
-            castedHolder.mLikeButton.setTag(question.getKey());
+            castedHolder.mLikeButton.setTag(question.getId());
             castedHolder.mLikeButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     String key = (String) v.getTag();
                     if (dbUtil.contains(key, "like")) {
-                        activity.updateLike(key, false);
+                        //activity.updateLike(key, false);
                         dbUtil.delete(key, "like");
-                        castedHolder.setLikeButtonState(false);
+                        setButtonState(castedHolder.mLikeButton, false);
                     } else if (!dbUtil.contains(key, "dislike")) {
-                        activity.updateLike(key, true);
+                        //activity.updateLike(key, true);
                         dbUtil.put(key, "like");
-                        castedHolder.setLikeButtonState(true);
+                        setButtonState(castedHolder.mLikeButton, true);
                     }
 
                 }
             });
-            castedHolder.mDislikeButton.setTag(question.getKey());
+            castedHolder.mDislikeButton.setTag(question.getId());
             castedHolder.mDislikeButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     String key = (String) v.getTag();
                     if (dbUtil.contains(key, "dislike")) {
-                        activity.updateDislike(key, false);
+                        //activity.updateDislike(key, false);
                         dbUtil.delete(key, "dislike");
-                        castedHolder.setDislikeButtonState(false);
+                        setButtonState(castedHolder.mDislikeButton, false);
                     } else if (!dbUtil.contains(key, "like")) {
-                        activity.updateDislike(key, true);
+                        //activity.updateDislike(key, true);
                         dbUtil.put(key, "dislike");
-                        castedHolder.setDislikeButtonState(true);
+                        setButtonState(castedHolder.mDislikeButton, true);
                     }
 
                 }
             });
+
+            Linkify.addLinks(castedHolder.mQuestionTextView, Linkify.ALL);
+
+            Pattern hashTagPattern = Pattern.compile("#[^\\s`\\-=\\[\\]\\\\;',\\.\\/~!@#$%^&*()+{}\\|:\"<>?]+");
+            Linkify.addLinks(castedHolder.mQuestionTextView, hashTagPattern, "", new Linkify.MatchFilter() {
+                @Override
+                public boolean acceptMatch(CharSequence s, int start, int end) {
+                    if (start == 0) {
+                        return true;
+                    } else if (start > 0) {
+                        Pattern pattern = Pattern.compile("[\\s`\\-=\\[\\]\\\\;',.~!@#$%^*()+{}\\|:\"<>?]");
+                        Matcher matcher = pattern.matcher(String.valueOf(s.charAt(start - 1)));
+                        if (matcher.find()) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }, null);
+
+        }
+    }
+
+    public void setButtonState(LinearLayout button, boolean active) {
+        if (active) {
+            int color = mContext.getResources().getColor(R.color.light_blue_300);
+            ((ImageView) button.getChildAt(0)).setColorFilter(color);
+            ((TextView) button.getChildAt(1)).setTextColor(color);
+        } else {
+            int color = mContext.getResources().getColor(R.color.inactive_icon_light);
+            ((ImageView) button.getChildAt(0)).setColorFilter(color);
+            ((TextView) button.getChildAt(1)).setTextColor(color);
         }
     }
 
@@ -120,27 +163,22 @@ public class QuestionRecyclerViewAdapter extends FirebaseRecyclerViewAdapter<Que
     }
 
     public static class NoteViewHolder extends RecyclerView.ViewHolder {
-        private boolean liked;
-        private boolean disliked;
-        private String key;
-        private TextView mTitleTextView;
-        private TextView mQuestionTextView;
-        private TextView mSummaryTextView;
-        private TextView mTimeTextView;
-        public LinearLayout mLikeButton;
-        public LinearLayout mDislikeButton;
+        @Bind(R.id.titleTextView)
+        TextView mTitleTextView;
+        @Bind(R.id.questionTextView)
+        TextView mQuestionTextView;
+        @Bind(R.id.summaryTextView)
+        TextView mSummaryTextView;
+        @Bind(R.id.timeTextView)
+        TextView mTimeTextView;
+        @Bind(R.id.likeButton)
+        LinearLayout mLikeButton;
+        @Bind(R.id.dislikeButton)
+        LinearLayout mDislikeButton;
 
-        NoteViewHolder(final View view) {
+        NoteViewHolder(View view) {
             super(view);
-            mTitleTextView = (TextView) view.findViewById(R.id.titleTextView);
-            mQuestionTextView = (TextView) view.findViewById(R.id.questionTextView);
-            mSummaryTextView = (TextView) view.findViewById(R.id.summaryTextView);
-            mTimeTextView = (TextView) view.findViewById(R.id.timeTextView);
-            mLikeButton = (LinearLayout) view.findViewById(R.id.likeButton);
-            mDislikeButton = (LinearLayout) view.findViewById(R.id.dislikeButton);
-            key = null;
-            liked = false;
-            disliked = false;
+            ButterKnife.bind(this, view);
         }
 
         public void setTitle(String title) {
@@ -174,35 +212,11 @@ public class QuestionRecyclerViewAdapter extends FirebaseRecyclerViewAdapter<Que
             mSummaryTextView.setText(builder.toString());
         }
 
-        public void setLikeButtonState(boolean active) {
-            if (active) {
-                ((ImageView)mLikeButton.getChildAt(0)).setImageResource(R.drawable.ic_thumb_up_blue_24dp);
-                ((TextView)mLikeButton.getChildAt(1)).setTextColor(Color.rgb(88, 144, 255));
-            } else {
-                ((ImageView)mLikeButton.getChildAt(0)).setImageResource(R.drawable.ic_thumb_up_grey_24dp);
-                ((TextView)mLikeButton.getChildAt(1)).setTextColor(Color.rgb(175, 180, 189));
-            }
-        }
-
-        public void setDislikeButtonState(boolean active) {
-            if (active) {
-                ((ImageView)mDislikeButton.getChildAt(0)).setImageResource(R.drawable.ic_thumb_down_blue_24dp);
-                ((TextView)mDislikeButton.getChildAt(1)).setTextColor(Color.rgb(88, 144, 255));
-            } else {
-                ((ImageView)mDislikeButton.getChildAt(0)).setImageResource(R.drawable.ic_thumb_down_grey_24dp);
-                ((TextView)mDislikeButton.getChildAt(1)).setTextColor(Color.rgb(175, 180, 189));
-            }
-        }
-
         public void setTime(long time) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d");
             SimpleDateFormat timeFormat = new SimpleDateFormat("h:mma");
             String timeStr = dateFormat.format(time) + " at " + timeFormat.format(time).toLowerCase();
             mTimeTextView.setText(timeStr);
-        }
-
-        public void setKey(String key) {
-            this.key = key;
         }
     }
 

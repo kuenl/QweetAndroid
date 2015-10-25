@@ -1,32 +1,44 @@
 package hk.ust.cse.hunkim.questionroom;
 
-import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.LinearLayout;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import com.android.volley.Request.Method;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
+import hk.ust.cse.hunkim.questionroom.datamodel.Room;
 
 
 /**
@@ -40,8 +52,14 @@ public class JoinActivity extends AppCompatActivity {
     // UI references.
     @Bind(R.id.room_name)
     AutoCompleteTextView roomNameView;
+    @Bind(R.id.joinRootView)
+    CoordinatorLayout rootView;
+    @Bind(R.id.progressContainer)
+    LinearLayout progressContainer;
+    @Bind(R.id.joinMainContainer)
+    LinearLayout joinMainContainer;
 
-    List<String> rooms;
+    Map<String, String> roomTable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +67,9 @@ public class JoinActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_join);
         ButterKnife.bind(this);
-        rooms = new ArrayList<>();
-        new GetRoomListTask().execute();
+        roomTable = null;
+
+        requestAutoCompleteRoomList();
     }
 
     @SuppressWarnings("unused")
@@ -68,6 +87,56 @@ public class JoinActivity extends AppCompatActivity {
         return true;
     }
 
+    private void requestAutoCompleteRoomList() {
+        progressContainer.setVisibility(View.VISIBLE);
+        joinMainContainer.setVisibility(View.GONE);
+        JsonArrayRequest request = new JsonArrayRequest("https://qweet-api.herokuapp.com/room?populate=false",
+                new Response.Listener<JSONArray>() {
+                    @Override
+                    public void onResponse(JSONArray response) {
+                        updateAutoCompleteRoomList(response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Snackbar.make(rootView, "Unable to retrieve room list.", Snackbar.LENGTH_SHORT)
+                        .setAction("Retry", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                requestAutoCompleteRoomList();
+                            }
+                        })
+                        .show();
+                updateAutoCompleteRoomList(null);
+            }
+        });
+        VolleySingleton.getInstance(this.getApplicationContext()).addToRequestQueue(request);
+    }
+
+    private void updateAutoCompleteRoomList(JSONArray jsonArray) {
+        if (jsonArray != null && jsonArray.length() > 0) {
+            List<String> roomNameList = new ArrayList<>();
+            roomTable = new Hashtable<>();
+            Set<String> roomNameSet = new HashSet<>();
+            for (int i = 0; i < jsonArray.length(); i++) {
+                try {
+                    String id = jsonArray.getJSONObject(i).getString("id");
+                    String name = jsonArray.getJSONObject(i).getString("name");
+                    roomTable.put(name, id);
+                    roomNameSet.add(name);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            roomNameList.addAll(roomNameSet);
+            Collections.sort(roomNameList);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                    android.R.layout.simple_dropdown_item_1line, roomNameList);
+            roomNameView.setAdapter(adapter);
+        }
+        progressContainer.setVisibility(View.GONE);
+        joinMainContainer.setVisibility(View.VISIBLE);
+    }
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -79,16 +148,16 @@ public class JoinActivity extends AppCompatActivity {
         roomNameView.setError(null);
 
         // Store values at the time of the login attempt.
-        String room_name = roomNameView.getText().toString();
+        String roomName = roomNameView.getText().toString();
 
         boolean cancel = true;
 
         // Check for a valid room name.
-        if (room_name.isEmpty()) {
+        if (roomName.isEmpty()) {
             roomNameView.setError(getString(R.string.error_field_required));
-        } else if (!isRoomNameValid(room_name)) {
+        } else if (!isRoomNameValid(roomName)) {
             roomNameView.setError(getString(R.string.error_invalid_room_name));
-        } else if (room_name.length() > 20) {
+        } else if (roomName.length() > 20) {
             roomNameView.setError("Length of room name should be less than 20.");
         } else {
             cancel = false;
@@ -98,7 +167,12 @@ public class JoinActivity extends AppCompatActivity {
             roomNameView.setText("");
             roomNameView.requestFocus();
         } else {
-            new CheckRoomExistTask().execute(room_name);
+            if (roomTable.containsKey(roomName)) {
+                join(roomTable.get(roomName));
+            } else {
+                askRoomCreation(roomName);
+            }
+            //new CheckRoomExistTask().execute(room_name);
         }
     }
 
@@ -106,108 +180,64 @@ public class JoinActivity extends AppCompatActivity {
         return room_name.matches("^[0-9a-zA-Z]+$");
     }
 
-    private void updateSuggestionList(JSONArray jsonArray) {
-        if (jsonArray != null) {
-            rooms.clear();
-            for (int i = 0; i < jsonArray.length(); i++) {
-                try {
-                    rooms.add(jsonArray.getJSONObject(i).getString("roomName"));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+    private void askRoomCreation(final String roomName) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(JoinActivity.this);
+        builder.setTitle("Create room");
+        builder.setMessage("The room doesn't exist, do you want to create it?");
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                requestCreateRoom(roomName);
             }
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                    android.R.layout.simple_dropdown_item_1line, rooms);
-            roomNameView.setAdapter(adapter);
-        }
+        });
+        builder.setNegativeButton("No", null);
+        builder.show();
     }
 
-    private class GetRoomListTask extends AsyncTask<Void, Void, JSONArray> {
-        @Override
-        protected JSONArray doInBackground(Void... params) {
-            return getList();
+    private void requestCreateRoom(String roomName) {
+        Room room = new Room();
+        room.setName(roomName);
+        JSONObject jsonObject = null;
+        try {
+            jsonObject = new JSONObject(new Gson().toJson(room));
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-
-        private JSONArray getList() {
-            try {
-                OkHttpClient client = new OkHttpClient();
-                String url = Constant.API_URL + "room";
-                Log.d(TAG, url);
-                Request request = new Request.Builder()
-                        .url(url)
-                        .build();
-
-                Response response = client.newCall(request).execute();
-                return new JSONArray(response.body().string());
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            } catch (JSONException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(JSONArray jsonArray) {
-            updateSuggestionList(jsonArray);
-        }
-    }
-
-    private class CheckRoomExistTask extends AsyncTask<String, Void, Boolean> {
-        private String roomName;
-
-        @Override
-        protected Boolean doInBackground(String... params) {
-            roomName = params[0];
-            return checkExist(params[0]);
-        }
-
-        private Boolean checkExist(String roomName) {
-            try {
-                OkHttpClient client = new OkHttpClient();
-                String url = Constant.API_URL + "room/exist?id=" + roomName;
-                Log.d(TAG, url);
-                Request request = new Request.Builder()
-                        .url(url)
-                        .build();
-
-                Response response = client.newCall(request).execute();
-                return new JSONObject(response.body().string()).getBoolean("exist");
-            } catch (IOException e) {
-                e.printStackTrace();
-                return checkExist(roomName);
-            } catch (JSONException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Boolean exist) {
-            if (exist) {
-                join(roomName);
-            } else {
+        JsonObjectRequest request = new JsonObjectRequest(Method.POST, "https://qweet-api.herokuapp.com/room", jsonObject, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Room room = new GsonBuilder()
+                        .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
+                        .create()
+                        .fromJson(response.toString(), Room.class);
+                final String id = room.getId();
+                String adminKey = room.getAdminKey();
                 AlertDialog.Builder builder = new AlertDialog.Builder(JoinActivity.this);
-                builder.setTitle("Create room");
-                builder.setMessage("The room doesn't exist, do you want to create it?");
+                builder.setTitle("Room Created");
+                builder.setMessage("The room has been created. " +
+                        "\nPlease remember the private key for administration usage." +
+                        "\n" + adminKey);
                 builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        join(roomName);
+                        join(id);
                     }
                 });
-                builder.setNegativeButton("No", null);
+                builder.setCancelable(false);
                 builder.show();
             }
-        }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
 
-
+            }
+        });
+        VolleySingleton.getInstance(this.getApplicationContext()).addToRequestQueue(request);
     }
 
-    private void join(String room_name) {
+    private void join(String roomId) {
         Intent intent = new Intent(this, QuestionRoomActivity.class);
-        intent.putExtra(Constant.KEY_ROOM_NAME, room_name);
+        intent.putExtra(Constant.KEY_ROOM_ID, roomId);
         startActivity(intent);
     }
 }

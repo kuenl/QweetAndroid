@@ -6,13 +6,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore.Images.Media;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -30,14 +29,16 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.firebase.client.DataSnapshot;
-import com.firebase.client.Firebase;
-import com.firebase.client.FirebaseError;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.firebase.client.ValueEventListener;
-import com.rockerhieu.emojicon.EmojiconEditText;
 import com.rockerhieu.emojicon.EmojiconGridFragment;
 import com.rockerhieu.emojicon.EmojiconsFragment;
 import com.rockerhieu.emojicon.emoji.Emojicon;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -48,14 +49,15 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import hk.ust.cse.hunkim.questionroom.question.Question;
+
+import static com.android.volley.Request.Method;
 
 public class NewQuestionActivity extends AppCompatActivity implements ViewTreeObserver.OnGlobalLayoutListener,
         View.OnFocusChangeListener,
         EmojiconGridFragment.OnEmojiconClickedListener,
         EmojiconsFragment.OnEmojiconBackspaceClickedListener {
 
-    private String roomName;
+    private String roomId;
 
     @Bind(R.id.activity_new_question_root)
     CoordinatorLayout rootView;
@@ -72,8 +74,10 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     @Bind(R.id.deleteImageButton)
     ImageView deleteImageButton;
 
+    //@Bind(R.id.editEmojicon)
+    //EmojiconEditText mEmojiEditText;
     @Bind(R.id.editEmojicon)
-    EmojiconEditText mEmojiEditText;
+    EditText mEmojiEditText;
 
     // Variable for controlling the emoji keyboard
     @Bind(R.id.insertEmojiButton)
@@ -106,10 +110,11 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
         setSupportActionBar(toolbar);
 
         Intent intent = getIntent();
-        roomName = intent.getStringExtra(Constant.KEY_ROOM_NAME);
-        if (roomName == null || roomName.isEmpty()) {
-            roomName = "all";
-        }
+        assert (intent != null);
+
+        roomId = intent.getStringExtra(Constant.KEY_ROOM_ID);
+        assert (roomId != null);
+        assert (!roomId.isEmpty());
 
         imageBitmap = null;
 
@@ -122,13 +127,11 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
 
         emojiKeyboardVisable = false;
         requestedEmojiKeyboard = false;
-        insertEmojiButton.setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
-        keyboardButton.setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
 
         //  Create a instance of emoji keyboard
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.emojiKeyboard, EmojiconsFragment.newInstance(false))
+                .replace(R.id.emojiKeyboard, EmojiconsFragment.newInstance(true))
                 .commit();
 
         // Listen to keyboard change
@@ -231,27 +234,29 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     private void submit() {
         final String title = titleEditText.getText().toString().trim();
         final String question = mEmojiEditText.getText().toString().trim();
-        if (!title.isEmpty() || !question.isEmpty()) {
-            Firebase.setAndroidContext(this);
-            final Firebase mFirebaseRef = new Firebase(Constant.FIREBASE_URL).child(roomName).child("questions");
-            mConnectedListener = mFirebaseRef.getRoot().child(".info/connected").addValueEventListener(new ValueEventListener() {
+        if (!title.isEmpty() && !question.isEmpty()) {
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("roomId", roomId);
+                jsonObject.put("headline", title);
+                jsonObject.put("message", question);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JsonObjectRequest request = new JsonObjectRequest(Method.POST, "https://qweet-api.herokuapp.com/question", jsonObject,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            finish();
+                        }
+                    }, new Response.ErrorListener() {
                 @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    boolean connected = (Boolean) dataSnapshot.getValue();
-                    if (connected) {
-                        Toast.makeText(NewQuestionActivity.this, "Connected to Firebase", Toast.LENGTH_SHORT).show();
-                        mFirebaseRef.push().setValue(new Question(title, question));
-                        finish();
-                        mFirebaseRef.getRoot().child(".info/connected").removeEventListener(mConnectedListener);
-                    } else {
-                        Toast.makeText(NewQuestionActivity.this, "Failed to connect to Firebase", Toast.LENGTH_SHORT).show();
-                    }
-                }
-                
-                @Override
-                public void onCancelled(FirebaseError firebaseError) {
+                public void onErrorResponse(VolleyError error) {
+                    String msg = error.getMessage() + "Please try again later.";
+                    Snackbar.make(NewQuestionActivity.this.rootView, msg, Snackbar.LENGTH_LONG).show();
                 }
             });
+            VolleySingleton.getInstance(this).addToRequestQueue(request);
         }
     }
 
