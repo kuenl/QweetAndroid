@@ -45,6 +45,22 @@
             android:name=".CanvasActivity"
             android:label=""
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".HashTagActivity"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:host="qweet.kuenl.com"
+                    android:pathPrefix="/room"
+                    android:scheme="content" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ViewQuestionActivity" >
+        </activity>
     </application>
 
 </manifest>

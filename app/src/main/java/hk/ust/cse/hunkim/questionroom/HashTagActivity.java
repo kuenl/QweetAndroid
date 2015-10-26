@@ -1,20 +1,13 @@
 package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
-import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
-import android.support.v4.app.TaskStackBuilder;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.SearchView.OnQueryTextListener;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import com.android.volley.Response;
@@ -27,17 +20,22 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
 import hk.ust.cse.hunkim.questionroom.datamodel.Question;
 import hk.ust.cse.hunkim.questionroom.datamodel.Room;
+import hk.ust.cse.hunkim.questionroom.db.DBHelper;
+import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 
-public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTextListener {
-    private static final String TAG = "QuestionRoomActivity";
+public class HashTagActivity extends AppCompatActivity {
+    private static final String TAG = "HashTagActivity";
 
     private String roomId;
+    private String tag;
+
+    private DBUtil dbutil;
 
     private Room mRoom;
 
@@ -47,66 +45,46 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
     @Bind(R.id.questionRecyclerView)
     protected RecyclerView mRecyclerView;
     private QuestionRoomRecyclerViewAdapter mAdapter;
+    private RecyclerView.LayoutManager mLayoutManager;
 
     private Thread roomUpdateThread;
-
-    private String queryStr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_question_room);
+        setContentView(R.layout.activity_hash_tag);
         ButterKnife.bind(this);
 
-        Intent intent = getIntent();
-        assert (intent != null);
+        Uri uri = getIntent().getData();
+        String uriStr = uri.toString();
 
-        roomId = intent.getStringExtra(Constant.KEY_ROOM_ID);
-        assert (roomId != null);
+        String file = uriStr.substring(uriStr.lastIndexOf("/") + 1);
+        int hashIdx = file.lastIndexOf("#");
+        roomId = file.substring(0, hashIdx);
+        tag = file.substring(hashIdx);
+        Log.d(TAG, roomId);
+        Log.d(TAG, tag);
 
+        toolbar.setTitle(tag);
         setSupportActionBar(toolbar);
+        toolbar.setTitle(tag);
 
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         mAdapter = new QuestionRoomRecyclerViewAdapter(this, null);
         mRecyclerView.setAdapter(mAdapter);
-        queryStr = "";
-        mRoom = null;
+
+        DBHelper mDbHelper = new DBHelper(this);
+        dbutil = new DBUtil(mDbHelper);
     }
 
-    @OnClick(R.id.fab)
-    public void onFabClick() {
-        Intent intent = new Intent();
-        intent.putExtra(Constant.KEY_ROOM_ID, roomId);
-        intent.setClass(QuestionRoomActivity.this, NewQuestionActivity.class);
-        startActivity(intent);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_question_room, menu);
-        MenuItem searchItem = menu.findItem(R.id.search);
-        SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-        mSearchView.setOnQueryTextListener(this);
-        return true;
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                Intent upIntent = NavUtils.getParentActivityIntent(this);
-                if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
-                    TaskStackBuilder.create(this)
-                            .addNextIntentWithParentStack(upIntent)
-                            .startActivities();
-                } else {
-                    upIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    NavUtils.navigateUpTo(this, upIntent);
-                }
+                finish();
                 return true;
         }
         return false;
@@ -123,41 +101,6 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
         super.onResume();
         roomUpdateThread = new Thread(new RequestRoomTask(this, roomId));
         roomUpdateThread.start();
-    }
-
-    @Override
-    public boolean onQueryTextSubmit(String query) {
-        queryStr = query;
-        updateRoom(mRoom);
-        return false;
-    }
-
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        queryStr = newText;
-        updateRoom(mRoom);
-        return false;
-    }
-
-    private void updateRoom(Room room) {
-        if (room != null) {
-            toolbar.setTitle(room.getName());
-            mAdapter.changeData(getSearchFilteredList(room.getQuestions()));
-        }
-    }
-
-    private List<Question> getSearchFilteredList(List<Question> ori) {
-        if (queryStr.isEmpty()) {
-            return ori;
-        } else {
-            List<Question> filtered = new ArrayList<>();
-            for (Question q : ori) {
-                if (q.getMessage().toLowerCase().contains(queryStr.toLowerCase())) {
-                    filtered.add(q);
-                }
-            }
-            return filtered;
-        }
     }
 
     private class RequestRoomTask implements Runnable {
@@ -181,7 +124,16 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
                                         .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
                                         .create()
                                         .fromJson(response.toString(), Room.class);
-                                updateRoom(mRoom);
+                                Pattern hashTagPattern = Pattern.compile("([\\s`\\-=\\[\\]\\\\;',.~!@#$%^*()+{}\\|:\"<>?]|^)" + tag + "([\\s`\\-=\\[\\]\\\\;',\\.\\/~!@#$%^&*()+{}\\|:\"<>?]|$)");
+                                Log.d(TAG, hashTagPattern.toString());
+                                List<Question> ori = mRoom.getQuestions();
+                                List<Question> filtered = new ArrayList<>();
+                                for (Question q : ori) {
+                                    if (hashTagPattern.matcher(q.getMessage()).find()) {
+                                        filtered.add(q);
+                                    }
+                                }
+                                mAdapter.changeData(filtered);
                             }
                         }, new Response.ErrorListener() {
                     @Override
@@ -199,4 +151,5 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
             }
         }
     }
+
 }

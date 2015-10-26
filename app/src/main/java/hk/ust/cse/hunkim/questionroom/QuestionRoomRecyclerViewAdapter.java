@@ -140,8 +140,10 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
 
         Linkify.addLinks(holder.mQuestionTextView, Linkify.ALL);
 
+        String url = "content://qweet.kuenl.com/room/" + data.getRoomId();
+
         Pattern hashTagPattern = Pattern.compile("#[^\\s`\\-=\\[\\]\\\\;',\\.\\/~!@#$%^&*()+{}\\|:\"<>?]+");
-        Linkify.addLinks(holder.mQuestionTextView, hashTagPattern, "", new Linkify.MatchFilter() {
+        Linkify.addLinks(holder.mQuestionTextView, hashTagPattern, url, new Linkify.MatchFilter() {
             @Override
             public boolean acceptMatch(CharSequence s, int start, int end) {
                 if (start == 0) {

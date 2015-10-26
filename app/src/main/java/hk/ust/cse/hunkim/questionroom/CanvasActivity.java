@@ -67,7 +67,7 @@ public class CanvasActivity extends AppCompatActivity {
         return false;
     }
 
-    public void onClearPressed() {
+    private void onClearPressed() {
         if (!mCanvasView.isEmpty()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Confirm to clear");
@@ -102,7 +102,7 @@ public class CanvasActivity extends AppCompatActivity {
         }
     }
 
-    public boolean save(Bitmap bitmap) {
+    private boolean save(Bitmap bitmap) {
         try {
             File file = new File(uri.getPath());
             OutputStream outputStream = new FileOutputStream(file);

@@ -32,7 +32,6 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.firebase.client.ValueEventListener;
 import com.rockerhieu.emojicon.EmojiconGridFragment;
 import com.rockerhieu.emojicon.EmojiconsFragment;
 import com.rockerhieu.emojicon.emoji.Emojicon;
@@ -96,8 +95,6 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     private List<String> pollItemList;
     private NewPollRecyclerViewAdapter adapter;
 
-    private ValueEventListener mConnectedListener;
-
     private Bundle bundle;
 
 
@@ -114,7 +111,6 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
 
         roomId = intent.getStringExtra(Constant.KEY_ROOM_ID);
         assert (roomId != null);
-        assert (!roomId.isEmpty());
 
         imageBitmap = null;
 

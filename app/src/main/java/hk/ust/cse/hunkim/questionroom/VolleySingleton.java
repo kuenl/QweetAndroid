@@ -1,27 +1,26 @@
 package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.support.v4.util.LruCache;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
 
 /**
- * Created by Administrator on 23/10/2015.
+ * A Singleton class for Volley request queue.
+ * Created by Leung Pui Kuen on 23/10/2015.
  */
 public class VolleySingleton {
     private static VolleySingleton mInstance;
     private RequestQueue mRequestQueue;
-    private ImageLoader mImageLoader;
+    //private ImageLoader mImageLoader;
     private static Context mCtx;
 
     private VolleySingleton(Context context) {
         mCtx = context;
         mRequestQueue = getRequestQueue();
 
+        /*
         mImageLoader = new ImageLoader(mRequestQueue,
                 new ImageLoader.ImageCache() {
                     private final LruCache<String, Bitmap>
@@ -37,6 +36,7 @@ public class VolleySingleton {
                         cache.put(url, bitmap);
                     }
                 });
+                */
     }
 
     public static synchronized VolleySingleton getInstance(Context context) {
@@ -50,7 +50,7 @@ public class VolleySingleton {
         if (mRequestQueue == null) {
             // getApplicationContext() is key, it keeps you from leaking the
             // Activity or BroadcastReceiver if someone passes one in.
-            mRequestQueue = Volley.newRequestQueue(mCtx.getApplicationContext());
+            mRequestQueue = Volley.newRequestQueue(mCtx);
         }
         return mRequestQueue;
     }
@@ -59,7 +59,9 @@ public class VolleySingleton {
         getRequestQueue().add(req);
     }
 
+    /*
     public ImageLoader getImageLoader() {
         return mImageLoader;
     }
+    */
 }
