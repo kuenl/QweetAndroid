@@ -11,16 +11,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.android.volley.Request.Method;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.google.gson.GsonBuilder;
-
-import org.json.JSONObject;
-
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,7 +25,7 @@ import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 /**
  * Created by Administrator on 23/10/2015.
  */
-public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<QuestionRoomRecyclerViewAdapter.ViewHolder>  {
+public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<QuestionRoomRecyclerViewAdapter.ViewHolder> {
     private Context mContext;
     private List<Question> mDataset;
     private DBUtil dbUtil;
@@ -56,6 +47,7 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
         LinearLayout mLikeButton;
         @Bind(R.id.dislikeButton)
         LinearLayout mDislikeButton;
+
         public ViewHolder(View v) {
             super(v);
             ButterKnife.bind(this, v);
@@ -77,7 +69,7 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
     // Create new views (invoked by the layout manager)
     @Override
     public QuestionRoomRecyclerViewAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                   int viewType) {
+                                                                         int viewType) {
         // create a new view
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.card_question_simple, parent, false);
@@ -92,52 +84,28 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
     public void onBindViewHolder(final ViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        Question data = mDataset.get(position);
-        String id = data.getId();
+        final Question data = mDataset.get(position);
+        final String id = data.getId();
         holder.mTitleTextView.setText(data.getHeadline());
         holder.mQuestionTextView.setText(data.getMessage());
         holder.mSummaryTextView.setText(data.getRatingSummary());
         holder.mTimeTextView.setText(DateUtils.getRelativeTimeSpanString(data.getCreatedAt().getTime()));
-        changeVoteViewState(holder.mLikeButton, dbUtil.contains(id, "like"));
-        changeVoteViewState(holder.mDislikeButton, dbUtil.contains(id, "dislike"));
+        changeVoteViewState(holder.mLikeButton, dbUtil.contains(id, "upvote"));
+        changeVoteViewState(holder.mDislikeButton, dbUtil.contains(id, "downvote"));
         holder.mLikeButton.setTag(id);
         holder.mLikeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String key = (String) v.getTag();
-                if (dbUtil.contains(key, "like")) {
-                    //activity.updateLike(key, false);
-                    dbUtil.delete(key, "like");
-                    changeVoteViewState(holder.mLikeButton, false);
-                } else if (!dbUtil.contains(key, "dislike")) {
-                    //activity.updateLike(key, true);
-                    onUpDownVoteViewClick(holder.mLikeButton, true);
-                    dbUtil.put(key, "like");
-                    changeVoteViewState(holder.mLikeButton, true);
-                }
-
+                data.vote(mContext, true, !dbUtil.contains(data.getId(), "upvote"));
             }
         });
         holder.mDislikeButton.setTag(id);
         holder.mDislikeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String key = (String) v.getTag();
-                if (dbUtil.contains(key, "dislike")) {
-                    //activity.updateDislike(key, false);
-                    dbUtil.delete(key, "dislike");
-                    changeVoteViewState(holder.mDislikeButton, false);
-                } else if (!dbUtil.contains(key, "like")) {
-                    //activity.updateDislike(key, true);
-
-                    onUpDownVoteViewClick(holder.mLikeButton, false);
-                    dbUtil.put(key, "dislike");
-                    changeVoteViewState(holder.mDislikeButton, true);
-                }
-
+                data.vote(mContext, false, !dbUtil.contains(data.getId(), "downvote"));
             }
         });
-
         Linkify.addLinks(holder.mQuestionTextView, Linkify.ALL);
 
         String url = "content://qweet.kuenl.com/room/" + data.getRoomId();
@@ -161,7 +129,7 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
 
     }
 
-    private void changeVoteViewState(LinearLayout v, boolean active){
+    private void changeVoteViewState(LinearLayout v, boolean active) {
         if (active) {
             int color = mContext.getResources().getColor(R.color.colorAccent);
             ((ImageView) v.getChildAt(0)).setColorFilter(color);
@@ -170,51 +138,6 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
             int color = mContext.getResources().getColor(R.color.inactive_icon_light);
             ((ImageView) v.getChildAt(0)).setColorFilter(color);
             ((TextView) v.getChildAt(1)).setTextColor(color);
-        }
-    }
-
-    private void onUpDownVoteViewClick(final LinearLayout v, boolean upvote){
-        String id = (String) v.getTag();
-        if (upvote) {
-            if (!dbUtil.contains(id, "like") && !dbUtil.contains(id, "dislike")) {
-                JsonObjectRequest request = new JsonObjectRequest(Method.PUT, "https://qweet-api.herokuapp.com/question/" + id + "/upvote", new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Question question = new GsonBuilder()
-                                .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
-                                .create()
-                                .fromJson(response.toString(), Question.class);
-                        final String id = question.getId();
-                        changeVoteViewState(v, true);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        changeVoteViewState(v, false);
-                    }
-                });
-                VolleySingleton.getInstance(mContext).addToRequestQueue(request);
-            }
-        } else {
-            if (!dbUtil.contains(id, "like") && !dbUtil.contains(id, "dislike")) {
-                JsonObjectRequest request = new JsonObjectRequest(Method.POST, "https://qweet-api.herokuapp.com/question/" + id + "/downvote", new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Question question = new GsonBuilder()
-                                .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
-                                .create()
-                                .fromJson(response.toString(), Question.class);
-                        final String id = question.getId();
-                        changeVoteViewState(v, true);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        changeVoteViewState(v, false);
-                    }
-                });
-                VolleySingleton.getInstance(mContext).addToRequestQueue(request);
-            }
         }
     }
 

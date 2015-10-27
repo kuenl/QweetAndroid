@@ -61,16 +61,14 @@ public class AddImageDialog extends AppCompatDialog {
                     File photoFile = null;
                     try {
                         photoFile = createImageFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    // Continue only if the File was successfully created
-                    if (photoFile != null) {
+                        // Continue only if the File was successfully created
                         Uri uri = Uri.fromFile(photoFile);
                         bundle.putParcelable("data", uri);
                         takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
                                 uri);
                         ((Activity) context).startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
                 break;
@@ -84,11 +82,7 @@ public class AddImageDialog extends AppCompatDialog {
                 File photoFile = null;
                 try {
                     photoFile = createImageFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                // Continue only if the File was successfully created
-                if (photoFile != null) {
+                    // Continue only if the File was successfully created
                     Intent drawDrawingIntent = new Intent();
                     Uri uri = Uri.fromFile(photoFile);
                     bundle.putParcelable("data", uri);
@@ -96,6 +90,8 @@ public class AddImageDialog extends AppCompatDialog {
                             uri);
                     drawDrawingIntent.setClass(context, CanvasActivity.class);
                     ((Activity) context).startActivityForResult(drawDrawingIntent, REQUEST_DRAW_DRAWING);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
                 break;
             }

@@ -167,7 +167,7 @@ public class JoinActivity extends AppCompatActivity {
             roomNameView.setText("");
             roomNameView.requestFocus();
         } else {
-            if (roomTable.containsKey(roomName)) {
+            if (roomTable != null && roomTable.containsKey(roomName)) {
                 join(roomTable.get(roomName));
             } else {
                 askRoomCreation(roomName);

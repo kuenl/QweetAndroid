@@ -6,6 +6,12 @@ import android.test.TouchUtils;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 
 /**
  * Created by hunkim on 7/15/15.
@@ -111,63 +117,37 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
 
     }
 
-    /*
-    public void testCreatingActivity() {
+    public void testUpdateAutoCompleteRoomList() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, JSONException {
+        Class[] cArg = new Class[1];
+        cArg[0] = JSONArray.class;
 
-        //Create and add an ActivityMonitor to monitor interaction between the system and the
-        //ReceiverActivity
-        Instrumentation.ActivityMonitor receiverActivityMonitor = getInstrumentation()
-                .addMonitor(MainActivity.class.getName(), null, false);
+        final Method method = activity.getClass().getDeclaredMethod("updateAutoCompleteRoomList", cArg);
+        method.setAccessible(true);
 
-        //Request focus on the EditText field. This must be done on the UiThread because?
+        final Object[] oArg = new Object[1];
+        oArg[0] = null;
+        method.invoke(activity, oArg);
+
+
+
+        final String jsonStr = "\n" +
+                "[{\"name\":\"testingRoom\",\"createdAt\":\"2015-10-21T16:11:40.213Z\",\"updatedAt\":\"2015-10-21T16:11:40.221Z\",\"id\":\"5627b93c3cef680300a1d0a3\"},{\"name\":\"dfghjkl\",\"createdAt\":\"2015-10-21T16:13:22.180Z\",\"updatedAt\":\"2015-10-21T16:13:22.334Z\",\"id\":\"5627b9a2f7f5b00300164cd6\"}]";
+        oArg[0] = new JSONArray(jsonStr);
+
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                roomNameEditText.requestFocus();
+                try {
+                    method.invoke(activity, new JSONArray(jsonStr));
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
         });
-        //Wait until all events from the MainHandler's queue are processed
-        getInstrumentation().waitForIdleSync();
 
-        //Send the room name
-        getInstrumentation().sendStringSync("comp3111");
-        getInstrumentation().waitForIdleSync();
-
-        //Click on the sendToReceiverButton to send the message to ReceiverActivity
-        TouchUtils.clickView(this, joinButton);
-
-        //Wait until all events from the MainHandler's queue are processed
-        getInstrumentation().waitForIdleSync();
-
-        //Wait until MainActivity was launched and get a reference to it.
-        MainActivity mainActivity = (MainActivity) receiverActivityMonitor
-                .waitForActivityWithTimeout(TIMEOUT_IN_MS);
-
-        //Verify that MainActivity was started
-        assertNotNull("ReceiverActivity is null", mainActivity);
-        assertEquals("Monitor for MainActivity has not been called", 1,
-                receiverActivityMonitor.getHits());
-        assertEquals("Activity is of wrong type", MainActivity.class,
-                mainActivity.getClass());
-*/
-        /*
-        //Read the message received by ReceiverActivity
-        final TextView receivedMessage = (TextView) mainActivity
-                .findViewById(R.id.received_message_text_view);
-        //Verify that received message is correct
-        assertNotNull(receivedMessage);
-        assertEquals("Wrong received message", TEST_MESSAGE, receivedMessage.getText().toString());
-        */
-/*
-        Intent intent = mainActivity.getIntent();
-        assertNotNull("Intent should be set", intent);
-
-        assertEquals("comp3111", intent.getStringExtra(Constant.KEY_ROOM_NAME));
-
-        assertEquals("This is set correctly", "Room name: comp3111", mainActivity.getTitle());
-
-        //Unregister monitor for ReceiverActivity
-        getInstrumentation().removeMonitor(receiverActivityMonitor);
-
-    }*/
+    }
 }

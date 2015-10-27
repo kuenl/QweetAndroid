@@ -1,6 +1,19 @@
 package hk.ust.cse.hunkim.questionroom.datamodel;
 
+import android.content.Context;
+
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONObject;
+
 import java.util.Date;
+
+import hk.ust.cse.hunkim.questionroom.VolleySingleton;
+import hk.ust.cse.hunkim.questionroom.db.DBHelper;
+import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 
 /**
  * Created by hunkim on 7/16/15.
@@ -145,5 +158,29 @@ public class Question implements Comparable<Question> {
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public void vote(final Context context, boolean upVote, final boolean add) {
+        final DBUtil db = new DBUtil(new DBHelper(context));
+        final String action = upVote ? "upvote" : "downvote";
+        if ((add && !db.contains(id, "upvote") && !db.contains(id, "downvote")) ||
+                (!add && db.contains(id, action))) {
+            int method = add ? Request.Method.PUT : Request.Method.DELETE;
+            JsonObjectRequest request = new JsonObjectRequest(method, "https://qweet-api.herokuapp.com/question/" + id + "/" + action, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    if (add) {
+                        db.put(id, action);
+                    } else {
+                        db.delete(id, action);
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                }
+            });
+            VolleySingleton.getInstance(context).addToRequestQueue(request);
+        }
     }
 }
