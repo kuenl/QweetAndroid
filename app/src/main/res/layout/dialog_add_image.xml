@@ -33,6 +33,6 @@
         android:drawableLeft="@android:drawable/ic_menu_edit"
         android:drawablePadding="?attr/dialogPreferredPadding"
         android:gravity="left|center_vertical"
-        android:text="Draw drawing" />
+        android:text="Draw something" />
 
 </LinearLayout>
