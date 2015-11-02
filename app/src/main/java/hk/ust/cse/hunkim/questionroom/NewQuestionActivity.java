@@ -14,9 +14,9 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +32,7 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.gson.Gson;
 import com.rockerhieu.emojicon.EmojiconGridFragment;
 import com.rockerhieu.emojicon.EmojiconsFragment;
 import com.rockerhieu.emojicon.emoji.Emojicon;
@@ -48,6 +49,8 @@ import java.util.List;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import hk.ust.cse.hunkim.questionroom.datamodel.PollOption;
+import hk.ust.cse.hunkim.questionroom.datamodel.Question;
 
 import static com.android.volley.Request.Method;
 
@@ -55,6 +58,7 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
         View.OnFocusChangeListener,
         EmojiconGridFragment.OnEmojiconClickedListener,
         EmojiconsFragment.OnEmojiconBackspaceClickedListener {
+    private static final String TAG = "NewQuestionActivity";
 
     private String roomId;
 
@@ -62,8 +66,8 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     CoordinatorLayout rootView;
     @Bind(R.id.toolbar)
     Toolbar toolbar;
-    @Bind(R.id.titleEditText)
-    EditText titleEditText;
+    //@Bind(R.id.titleEditText)
+    //EditText titleEditText;
     //@Bind(R.id.questionEditText)
     //EditText questionEditText;
     @Bind(R.id.pollItemRecyclerView)
@@ -117,7 +121,7 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
         pollItemList = new ArrayList<>();
         adapter = new NewPollRecyclerViewAdapter(pollItemList);
         pollItemRecyclerView.setAdapter(adapter);
-        pollItemRecyclerView.setLayoutManager(new NewPollRecyclerViewLayoutManager(this));
+        pollItemRecyclerView.setLayoutManager(new RecyclerViewWrapContentLayoutManager(this));
 
         bundle = new Bundle();
 
@@ -208,9 +212,10 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     }
 
     private void leave() {
-        String title = titleEditText.getText().toString().trim();
+        //String title = titleEditText.getText().toString().trim();
         String question = mEmojiEditText.getText().toString().trim();
-        if (!title.isEmpty() || !question.isEmpty() || imageBitmap != null || pollItemList.size() > 0) {
+        //if (!title.isEmpty() || !question.isEmpty() || imageBitmap != null || pollItemList.size() > 0) {
+        if (!question.isEmpty() || imageBitmap != null || pollItemList.size() > 0) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Confirm to leave");
             builder.setMessage("You have unsaved question. Do you want to leave this page and discard your question or stay on this page?");
@@ -228,17 +233,34 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     }
 
     private void submit() {
-        final String title = titleEditText.getText().toString().trim();
-        final String question = mEmojiEditText.getText().toString().trim();
-        if (!title.isEmpty() && !question.isEmpty()) {
-            JSONObject jsonObject = new JSONObject();
+        //final String title = titleEditText.getText().toString().trim();
+        final String message = mEmojiEditText.getText().toString().trim();
+        //if (!title.isEmpty() && !message.isEmpty()) {
+        if (!message.isEmpty()) {
+            List<PollOption> pollOptions = new ArrayList<>();
+            for (String str : pollItemList) {
+                str = str.trim();
+                if (!str.isEmpty()) {
+                    //PollOption p = new PollOption(str);
+                    //p.setCount((int) Math.random() % 100);
+                    //pollOptions.add(new PollOption(str));
+                    pollOptions.add(new PollOption(str));
+                }
+            }
+            if (pollItemList.size() > 0 && pollOptions.size() < 2) {
+                return;
+            }
+            //Question question = new Question(title, message);
+            Question question = new Question(message);
+            question.setRoomId(roomId);
+            question.setPollOptions(pollOptions);
+            JSONObject jsonObject = null;
             try {
-                jsonObject.put("roomId", roomId);
-                jsonObject.put("headline", title);
-                jsonObject.put("message", question);
+                jsonObject = new JSONObject(new Gson().toJson(question));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+            Log.d(TAG, jsonObject.toString());
             JsonObjectRequest request = new JsonObjectRequest(Method.POST, "https://qweet-api.herokuapp.com/question", jsonObject,
                     new Response.Listener<JSONObject>() {
                         @Override
@@ -248,8 +270,11 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    String msg = error.getMessage() + "Please try again later.";
-                    Snackbar.make(NewQuestionActivity.this.rootView, msg, Snackbar.LENGTH_LONG).show();
+                    if (error.getMessage() != null) {
+                        Log.d(TAG, error.getMessage());
+                        String msg = error.getMessage() + "Please try again later.";
+                        Snackbar.make(NewQuestionActivity.this.rootView, msg, Snackbar.LENGTH_LONG).show();
+                    }
                 }
             });
             VolleySingleton.getInstance(this).addToRequestQueue(request);
@@ -351,75 +376,6 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     public void onEmojiconClicked(Emojicon emojicon) {
         EmojiconsFragment.input(mEmojiEditText, emojicon);
     }
-
-    private class NewPollRecyclerViewLayoutManager extends LinearLayoutManager {
-        private int[] mMeasuredDimension = new int[2];
-
-        public NewPollRecyclerViewLayoutManager(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void onMeasure(RecyclerView.Recycler recycler, RecyclerView.State state,
-                              int widthSpec, int heightSpec) {
-            final int widthMode = View.MeasureSpec.getMode(widthSpec);
-            final int heightMode = View.MeasureSpec.getMode(heightSpec);
-            final int widthSize = View.MeasureSpec.getSize(widthSpec);
-            final int heightSize = View.MeasureSpec.getSize(heightSpec);
-            int width = 0;
-            int height = 0;
-            for (int i = 0; i < getItemCount(); i++) {
-                measureScrapChild(recycler, i,
-                        View.MeasureSpec.makeMeasureSpec(i, View.MeasureSpec.UNSPECIFIED),
-                        View.MeasureSpec.makeMeasureSpec(i, View.MeasureSpec.UNSPECIFIED),
-                        mMeasuredDimension);
-
-                if (getOrientation() == HORIZONTAL) {
-                    width = width + mMeasuredDimension[0];
-                    if (i == 0) {
-                        height = mMeasuredDimension[1];
-                    }
-                } else {
-                    height = height + mMeasuredDimension[1];
-                    if (i == 0) {
-                        width = mMeasuredDimension[0];
-                    }
-                }
-            }
-            switch (widthMode) {
-                case View.MeasureSpec.EXACTLY:
-                    width = widthSize;
-                case View.MeasureSpec.AT_MOST:
-                case View.MeasureSpec.UNSPECIFIED:
-            }
-
-            switch (heightMode) {
-                case View.MeasureSpec.EXACTLY:
-                    height = heightSize;
-                case View.MeasureSpec.AT_MOST:
-                case View.MeasureSpec.UNSPECIFIED:
-            }
-
-            setMeasuredDimension(width, height);
-        }
-
-        private void measureScrapChild(RecyclerView.Recycler recycler, int position, int widthSpec,
-                                       int heightSpec, int[] measuredDimension) {
-            View view = recycler.getViewForPosition(position);
-            if (view != null) {
-                RecyclerView.LayoutParams p = (RecyclerView.LayoutParams) view.getLayoutParams();
-                int childWidthSpec = ViewGroup.getChildMeasureSpec(widthSpec,
-                        getPaddingLeft() + getPaddingRight(), p.width);
-                int childHeightSpec = ViewGroup.getChildMeasureSpec(heightSpec,
-                        getPaddingTop() + getPaddingBottom(), p.height);
-                view.measure(childWidthSpec, childHeightSpec);
-                measuredDimension[0] = view.getMeasuredWidth() + p.leftMargin + p.rightMargin;
-                measuredDimension[1] = view.getMeasuredHeight() + p.bottomMargin + p.topMargin;
-                recycler.recycleView(view);
-            }
-        }
-    }
-
 
 }
 

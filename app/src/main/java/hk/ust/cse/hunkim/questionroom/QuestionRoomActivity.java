@@ -2,6 +2,7 @@ package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
@@ -58,12 +59,18 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
         setContentView(R.layout.activity_question_room);
         ButterKnife.bind(this);
 
+
+        Uri uri = getIntent().getData();
+        roomId = uri.toString();
+        roomId = roomId.substring(roomId.lastIndexOf("/") + 1);
+
+        /*
         Intent intent = getIntent();
         assert (intent != null);
 
         roomId = intent.getStringExtra(Constant.KEY_ROOM_ID);
         assert (roomId != null);
-
+*/
         setSupportActionBar(toolbar);
 
         mRecyclerView.setHasFixedSize(true);

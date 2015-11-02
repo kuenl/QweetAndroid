@@ -26,7 +26,7 @@ public class QuestionTest extends TestCase {
         q = new Question();
         q.setId("Id");
         q.setRoomId("Id");
-        q.setHeadline("Hello?");
+        //q.setHeadline("Hello?");
         q.setMessage("This is very nice.");
         q.setCompleted(true);
         q.setUpVote(0);
@@ -46,11 +46,12 @@ public class QuestionTest extends TestCase {
         assertEquals("RoomId", "Id", q.getRoomId());
     }
 
+    /*
     @SmallTest
     public void testHeadline() {
         assertEquals("Headline", "Hello?", q.getHeadline());
     }
-
+    */
 
     @SmallTest
     public void testMessage() {

@@ -10,9 +10,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackground"
-        android:drawableLeft="@android:drawable/ic_menu_camera"
+        android:drawableLeft="@drawable/ic_photo_camera_black_24dp"
         android:drawablePadding="?attr/dialogPreferredPadding"
         android:gravity="left|center_vertical"
+        android:textAllCaps="false"
         android:text="Take photo" />
 
     <Button
@@ -20,9 +21,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackground"
-        android:drawableLeft="@android:drawable/ic_menu_gallery"
+        android:drawableLeft="@drawable/ic_photo_black_24dp"
         android:drawablePadding="?attr/dialogPreferredPadding"
         android:gravity="left|center_vertical"
+        android:textAllCaps="false"
         android:text="Choose image" />
 
     <Button
@@ -30,9 +32,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackground"
-        android:drawableLeft="@android:drawable/ic_menu_edit"
+        android:drawableLeft="@drawable/ic_create_black_24dp"
         android:drawablePadding="?attr/dialogPreferredPadding"
         android:gravity="left|center_vertical"
-        android:text="Draw drawing" />
+        android:textAllCaps="false"
+        android:text="Draw something" />
 
 </LinearLayout>

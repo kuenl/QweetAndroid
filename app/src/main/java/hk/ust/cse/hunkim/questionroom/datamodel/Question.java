@@ -10,24 +10,42 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.List;
 
 import hk.ust.cse.hunkim.questionroom.VolleySingleton;
 import hk.ust.cse.hunkim.questionroom.db.DBHelper;
 import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 
 /**
- * Created by hunkim on 7/16/15.
+ * Data model for question
+ * Created by Leung Pui Kuen on 7/16/15.
  */
 public class Question implements Comparable<Question> {
     private String id;
     private String roomId;
-    private String headline;
+    //private String headline;
     private String message;
     private boolean completed;
     private int upVote;
     private int downVote;
+    private List<PollOption> pollOptions;
+    private List<Comment> comments;
     private Date createdAt;
     private Date updatedAt;
+
+    public Question() {
+    }
+
+    public Question(String message) {
+        this.message = message;
+    }
+
+    /*
+    public Question(String headline, String message) {
+        this.headline = headline;
+        this.message = message;
+    }
+    */
 
     public String getId() {
         return id;
@@ -45,6 +63,7 @@ public class Question implements Comparable<Question> {
         this.roomId = roomId;
     }
 
+    /*
     public String getHeadline() {
         return headline;
     }
@@ -52,6 +71,7 @@ public class Question implements Comparable<Question> {
     public void setHeadline(String headline) {
         this.headline = headline;
     }
+    */
 
     public String getMessage() {
         return message;
@@ -83,6 +103,22 @@ public class Question implements Comparable<Question> {
 
     public void setDownVote(int downVote) {
         this.downVote = downVote;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
+    }
+
+    public List<PollOption> getPollOptions() {
+        return pollOptions;
+    }
+
+    public void setPollOptions(List<PollOption> pollOptions) {
+        this.pollOptions = pollOptions;
     }
 
     public Date getCreatedAt() {

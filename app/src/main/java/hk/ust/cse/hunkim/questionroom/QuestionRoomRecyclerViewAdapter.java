@@ -1,6 +1,9 @@
 package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.format.DateUtils;
 import android.text.util.Linkify;
@@ -22,6 +25,8 @@ import hk.ust.cse.hunkim.questionroom.datamodel.Question;
 import hk.ust.cse.hunkim.questionroom.db.DBHelper;
 import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 
+import static android.content.Intent.*;
+
 /**
  * Created by Administrator on 23/10/2015.
  */
@@ -35,8 +40,10 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
     // you provide access to all the views for a data item in a view holder
     public static class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
-        @Bind(R.id.titleTextView)
-        TextView mTitleTextView;
+        @Bind(R.id.card_question_simple_root)
+        CardView mRootCardtView;
+        //@Bind(R.id.titleTextView)
+        //TextView mTitleTextView;
         @Bind(R.id.questionTextView)
         TextView mQuestionTextView;
         @Bind(R.id.summaryTextView)
@@ -86,7 +93,7 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
         // - replace the contents of the view with that element
         final Question data = mDataset.get(position);
         final String id = data.getId();
-        holder.mTitleTextView.setText(data.getHeadline());
+        //holder.mTitleTextView.setText(data.getHeadline());
         holder.mQuestionTextView.setText(data.getMessage());
         holder.mSummaryTextView.setText(data.getRatingSummary());
         holder.mTimeTextView.setText(DateUtils.getRelativeTimeSpanString(data.getCreatedAt().getTime()));
@@ -106,9 +113,21 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
                 data.vote(mContext, false, !dbUtil.contains(data.getId(), "downvote"));
             }
         });
+
+        holder.mRootCardtView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(mContext, ViewQuestionActivity.class);
+                intent.setAction(ACTION_VIEW);
+                intent.addCategory(CATEGORY_DEFAULT);
+                intent.setData(Uri.parse("content://qweet.kuenl.com/question/" + id));
+                mContext.startActivity(intent);
+            }
+        });
+
         Linkify.addLinks(holder.mQuestionTextView, Linkify.ALL);
 
-        String url = "content://qweet.kuenl.com/room/" + data.getRoomId();
+        String url = "hash://qweet.kuenl.com/room/" + data.getRoomId();
 
         Pattern hashTagPattern = Pattern.compile("#[^\\s`\\-=\\[\\]\\\\;',\\.\\/~!@#$%^&*()+{}\\|:\"<>?]+");
         Linkify.addLinks(holder.mQuestionTextView, hashTagPattern, url, new Linkify.MatchFilter() {

@@ -2,6 +2,7 @@ package hk.ust.cse.hunkim.questionroom;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -12,6 +13,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 import com.android.volley.Request.Method;
 import com.android.volley.Response;
@@ -40,6 +42,9 @@ import butterknife.OnClick;
 import butterknife.OnEditorAction;
 import hk.ust.cse.hunkim.questionroom.datamodel.Room;
 
+import static android.content.Intent.ACTION_VIEW;
+import static android.content.Intent.CATEGORY_DEFAULT;
+
 
 /**
  * A login screen that offers login via email/password.
@@ -54,10 +59,14 @@ public class JoinActivity extends AppCompatActivity {
     AutoCompleteTextView roomNameView;
     @Bind(R.id.joinRootView)
     CoordinatorLayout rootView;
-    @Bind(R.id.progressContainer)
-    LinearLayout progressContainer;
-    @Bind(R.id.joinMainContainer)
-    LinearLayout joinMainContainer;
+    //@Bind(R.id.progressContainer)
+    //LinearLayout progressContainer;
+    @Bind(R.id.roomlistProgressbar)
+    ProgressBar roomlistProgressbar;
+    //@Bind(R.id.joinMainContainer)
+    //LinearLayout joinMainContainer;
+    @Bind(R.id.joinFieldContainer)
+    LinearLayout joinFieldContainer;
 
     Map<String, String> roomTable;
 
@@ -68,7 +77,12 @@ public class JoinActivity extends AppCompatActivity {
         setContentView(R.layout.activity_join);
         ButterKnife.bind(this);
         roomTable = null;
+    }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         requestAutoCompleteRoomList();
     }
 
@@ -88,8 +102,8 @@ public class JoinActivity extends AppCompatActivity {
     }
 
     private void requestAutoCompleteRoomList() {
-        progressContainer.setVisibility(View.VISIBLE);
-        joinMainContainer.setVisibility(View.GONE);
+        roomlistProgressbar.setVisibility(View.VISIBLE);
+        joinFieldContainer.setVisibility(View.GONE);
         JsonArrayRequest request = new JsonArrayRequest("https://qweet-api.herokuapp.com/room?populate=false",
                 new Response.Listener<JSONArray>() {
                     @Override
@@ -99,7 +113,7 @@ public class JoinActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Snackbar.make(rootView, "Unable to retrieve room list.", Snackbar.LENGTH_SHORT)
+                Snackbar.make(rootView, "Unable to retrieve room list.", Snackbar.LENGTH_INDEFINITE)
                         .setAction("Retry", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -133,9 +147,12 @@ public class JoinActivity extends AppCompatActivity {
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                     android.R.layout.simple_dropdown_item_1line, roomNameList);
             roomNameView.setAdapter(adapter);
+            roomlistProgressbar.setVisibility(View.GONE);
+            joinFieldContainer.setVisibility(View.VISIBLE);
+        } else {
+            roomlistProgressbar.setVisibility(View.GONE);
+            joinFieldContainer.setVisibility(View.GONE);
         }
-        progressContainer.setVisibility(View.GONE);
-        joinMainContainer.setVisibility(View.VISIBLE);
     }
 
     /**
@@ -236,8 +253,16 @@ public class JoinActivity extends AppCompatActivity {
     }
 
     private void join(String roomId) {
+        /*
         Intent intent = new Intent(this, QuestionRoomActivity.class);
         intent.putExtra(Constant.KEY_ROOM_ID, roomId);
+        startActivity(intent);
+        */
+
+        Intent intent = new Intent();
+        intent.setAction(ACTION_VIEW);
+        intent.addCategory(CATEGORY_DEFAULT);
+        intent.setData(Uri.parse("content://qweet.kuenl.com/room/" + roomId));
         startActivity(intent);
     }
 }

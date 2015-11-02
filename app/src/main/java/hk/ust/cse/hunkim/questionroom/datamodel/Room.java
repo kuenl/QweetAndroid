@@ -4,7 +4,8 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Created by Administrator on 24/10/2015.
+ * Data model for question room
+ * Created by Leung Pui Kuen on 24/10/2015.
  */
 
 public class Room {

@@ -42,9 +42,9 @@ public class AddImageDialog extends AppCompatDialog {
         super(context);
         this.context = context;
         this.bundle = bundle;
+        setTitle("Add image");
         setContentView(R.layout.dialog_add_image);
         ButterKnife.bind(this);
-        setTitle("Add image");
         getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         if (new Intent(MediaStore.ACTION_IMAGE_CAPTURE).resolveActivity(context.getPackageManager()) == null) {
             button_take_photo.setVisibility(View.GONE);
