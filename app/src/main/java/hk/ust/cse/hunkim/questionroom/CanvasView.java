@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * View for listening to touch event and add stoke to the view
  * Created by Leung Pui Kuen on 18/10/2015.
  */
 public class CanvasView extends View {

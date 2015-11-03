@@ -116,7 +116,7 @@ public class HashTagActivity extends AppCompatActivity {
         public void run() {
             while (true) {
                 Log.d(TAG, "Polling room object.");
-                JsonObjectRequest request = new JsonObjectRequest("https://qweet-api.herokuapp.com/room/" + roomId,
+                JsonObjectRequest request = new JsonObjectRequest(Constant.BASE_URL + "room/" + roomId,
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {

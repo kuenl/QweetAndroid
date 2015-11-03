@@ -8,6 +8,7 @@ import android.widget.ImageButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.junit.runner.JUnitCore;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,29 +37,58 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
     protected void setUp() throws Exception {
         super.setUp();
 
+
         activity = getActivity();
         roomNameEditText = (EditText) activity.findViewById(R.id.room_name);
         joinButton = (ImageButton) activity.findViewById(R.id.joinButton);
-    }
 
-    /*
-    public void testRoomName() {
+
+        Class[] cArg = new Class[1];
+        cArg[0] = JSONArray.class;
+
+        final Method updateAutoCompleteRoomList = activity.getClass().getDeclaredMethod("updateAutoCompleteRoomList", cArg);
+        updateAutoCompleteRoomList.setAccessible(true);
+
+
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
-                roomNameEditText.setText("all");
+                try {
+                    updateAutoCompleteRoomList.invoke(activity, (JSONArray) null);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
-       // getInstrumentation().sendStringSync("all");
-        getInstrumentation().waitForIdleSync();
-
-        String actualText = roomNameEditText.getText().toString();
-        assertEquals("all", actualText);
 
 
+        final String jsonStr = "\n" +
+                "[{\"name\":\"testingRoom\",\"createdAt\":\"2015-10-21T16:11:40.213Z\",\"updatedAt\":\"2015-10-21T16:11:40.221Z\",\"id\":\"5627b93c3cef680300a1d0a3\"},{\"name\":\"dfghjkl\",\"createdAt\":\"2015-10-21T16:13:22.180Z\",\"updatedAt\":\"2015-10-21T16:13:22.334Z\",\"id\":\"5627b9a2f7f5b00300164cd6\"}]";
+
+        getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    updateAutoCompleteRoomList.invoke(activity, new JSONArray(jsonStr));
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
-*/
+
+    public void testDataModel(){
+        JUnitCore core = new JUnitCore();
+        core.run(RoomTest.class);
+        core.run(QuestionTest.class);
+    }
 
     public void testIntentSetting() {
 
@@ -89,10 +119,8 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
         //assertEquals("all", intent.getStringExtra(Constant.KEY_ROOM_ID));
     }
 
-    public void testIsRoomNameValid() {
-
+    public void testIsRoomNameValid() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, JSONException {
         TouchUtils.clickView(this, joinButton);
-
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
@@ -116,19 +144,18 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
         TouchUtils.clickView(this, joinButton);
 
     }
-
+    
+/*
     public void testUpdateAutoCompleteRoomList() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, JSONException {
         Class[] cArg = new Class[1];
         cArg[0] = JSONArray.class;
 
-        final Method method = activity.getClass().getDeclaredMethod("updateAutoCompleteRoomList", cArg);
-        method.setAccessible(true);
+        final Method updateAutoCompleteRoomList = activity.getClass().getDeclaredMethod("updateAutoCompleteRoomList", cArg);
+        updateAutoCompleteRoomList.setAccessible(true);
 
         final Object[] oArg = new Object[1];
         oArg[0] = null;
-        method.invoke(activity, oArg);
-
-
+        updateAutoCompleteRoomList.invoke(activity, oArg);
 
         final String jsonStr = "\n" +
                 "[{\"name\":\"testingRoom\",\"createdAt\":\"2015-10-21T16:11:40.213Z\",\"updatedAt\":\"2015-10-21T16:11:40.221Z\",\"id\":\"5627b93c3cef680300a1d0a3\"},{\"name\":\"dfghjkl\",\"createdAt\":\"2015-10-21T16:13:22.180Z\",\"updatedAt\":\"2015-10-21T16:13:22.334Z\",\"id\":\"5627b9a2f7f5b00300164cd6\"}]";
@@ -138,7 +165,7 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
             @Override
             public void run() {
                 try {
-                    method.invoke(activity, new JSONArray(jsonStr));
+                    updateAutoCompleteRoomList.invoke(activity, new JSONArray(jsonStr));
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 } catch (InvocationTargetException e) {
@@ -148,6 +175,5 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
                 }
             }
         });
-
-    }
+    }*/
 }

@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
 import android.test.ActivityInstrumentationTestCase2;
 
-import org.junit.Before;
-
 import static android.support.test.espresso.Espresso.onView;
 import static android.support.test.espresso.action.ViewActions.click;
 import static android.support.test.espresso.matcher.ViewMatchers.withId;
@@ -21,7 +19,7 @@ public class NewQuestionActivityTest extends ActivityInstrumentationTestCase2<Ne
         super(NewQuestionActivity.class);
     }
 
-    @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
 
@@ -33,13 +31,12 @@ public class NewQuestionActivityTest extends ActivityInstrumentationTestCase2<Ne
         activity = getActivity();
     }
 
-    /*
     public void testCamera() {
         onView(withId(R.id.addImageItem)).perform(click());
         getInstrumentation().waitForIdleSync();
         onView(withId(R.id.button_take_photo)).perform(click());
+        getInstrumentation().waitForIdleSync();
     }
-    */
 
     public void testGallery() {
         onView(withId(R.id.addImageItem)).perform(click());
@@ -52,4 +49,5 @@ public class NewQuestionActivityTest extends ActivityInstrumentationTestCase2<Ne
         getInstrumentation().waitForIdleSync();
         onView(withId(R.id.button_draw_drawing)).perform(click());
     }
+
 }

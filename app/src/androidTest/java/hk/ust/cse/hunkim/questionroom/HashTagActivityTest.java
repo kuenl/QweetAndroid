@@ -11,13 +11,8 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 
-import org.junit.Before;
-
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.CATEGORY_DEFAULT;
-import static android.support.test.espresso.Espresso.onView;
-import static android.support.test.espresso.action.ViewActions.click;
-import static android.support.test.espresso.matcher.ViewMatchers.withContentDescription;
 
 /**
  * Created by Thomas on 29/10/2015.
@@ -29,7 +24,7 @@ public class HashTagActivityTest extends ActivityInstrumentationTestCase2<HashTa
         super(HashTagActivity.class);
     }
 
-    @Before
+    @Override
     public void setUp() throws Exception {
         super.setUp();
 
@@ -37,25 +32,35 @@ public class HashTagActivityTest extends ActivityInstrumentationTestCase2<HashTa
                 .getTargetContext(), HashTagActivity.class);
         mStartIntent.setAction(ACTION_VIEW);
         mStartIntent.addCategory(CATEGORY_DEFAULT);
-        mStartIntent.setData(Uri.parse("content://qweet.kuenl.com/room/0#0"));
+        mStartIntent.setData(Uri.parse("hash://qweet.kuenl.com/room/0#0"));
         setActivityIntent(mStartIntent);
         injectInstrumentation(InstrumentationRegistry.getInstrumentation());
         activity = getActivity();
     }
 
     public void testNothing() {
-        activity.onOptionsItemSelected(fakeItem);
+        CustomMenuItem na  = new CustomMenuItem();
+        na.setItemId(0);
+        activity.onOptionsItemSelected(na);
     }
 
-    /*
+
     public void testHome() {
-        onView(withContentDescription("Navigate up")).perform(click());
+        CustomMenuItem na  = new CustomMenuItem();
+        na.setItemId(android.R.id.home);
+        activity.onOptionsItemSelected(na);
     }
-    */
-    MenuItem fakeItem = new MenuItem() {
+
+    private class CustomMenuItem implements MenuItem {
+        private int itemId;
+
+        public void setItemId(int itemId) {
+            this.itemId = itemId;
+        }
+
         @Override
         public int getItemId() {
-            return 0;
+            return itemId;
         }
 
         @Override
@@ -257,5 +262,5 @@ public class HashTagActivityTest extends ActivityInstrumentationTestCase2<HashTa
         public MenuItem setOnActionExpandListener(OnActionExpandListener listener) {
             return null;
         }
-    };
+    }
 }

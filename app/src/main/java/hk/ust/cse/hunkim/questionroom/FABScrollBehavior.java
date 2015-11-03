@@ -8,7 +8,8 @@ import android.util.AttributeSet;
 import android.view.View;
 
 /**
- * Created by Administrator on 25/10/2015.
+ * Hide and Show the floating action button
+ * Created by Leung Pui Kuen on 25/10/2015.
  */
 public class FABScrollBehavior extends FloatingActionButton.Behavior {
     public FABScrollBehavior(Context context, AttributeSet attributeSet) {

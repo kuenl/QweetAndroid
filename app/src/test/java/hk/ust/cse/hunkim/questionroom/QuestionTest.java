@@ -85,8 +85,19 @@ public class QuestionTest extends TestCase {
 
     @SmallTest
     public void testEqual() {
-        Question o = new Question();
         assertEquals("Equal", false, q.equals(null));
+        assertEquals("Equal", false, q.equals(0));
+        Question o = new Question();
+        q.setId(null);
+        o.setId(null);
+        assertEquals("Equal", false, q.equals(o));
+        q.setId("Id");
+        o.setId(null);
+        assertEquals("Equal", false, q.equals(o));
+        q.setId(null);
+        o.setId("Id");
+        assertEquals("Equal", false, q.equals(o));
+        q.setId("Id");
         o.setId("Id");
         assertEquals("Equal", true, q.equals(o));
         o.setId("id");

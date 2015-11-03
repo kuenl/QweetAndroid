@@ -45,9 +45,9 @@ import hk.ust.cse.hunkim.questionroom.datamodel.Room;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.Intent.CATEGORY_DEFAULT;
 
-
 /**
- * A login screen that offers login via email/password.
+ * An activity to select the room to enter
+ * Created by Leung Pui Kuen on 17/10/2015.
  */
 public class JoinActivity extends AppCompatActivity {
     private static String TAG = "JoinActivity";
@@ -104,7 +104,7 @@ public class JoinActivity extends AppCompatActivity {
     private void requestAutoCompleteRoomList() {
         roomlistProgressbar.setVisibility(View.VISIBLE);
         joinFieldContainer.setVisibility(View.GONE);
-        JsonArrayRequest request = new JsonArrayRequest("https://qweet-api.herokuapp.com/room?populate=false",
+        JsonArrayRequest request = new JsonArrayRequest(Constant.BASE_URL + "room?populate=false",
                 new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
@@ -220,7 +220,7 @@ public class JoinActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        JsonObjectRequest request = new JsonObjectRequest(Method.POST, "https://qweet-api.herokuapp.com/room", jsonObject, new Response.Listener<JSONObject>() {
+        JsonObjectRequest request = new JsonObjectRequest(Method.POST, Constant.BASE_URL + "room", jsonObject, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
                 Room room = new GsonBuilder()

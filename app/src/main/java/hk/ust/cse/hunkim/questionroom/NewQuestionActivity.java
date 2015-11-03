@@ -261,7 +261,7 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
                 e.printStackTrace();
             }
             Log.d(TAG, jsonObject.toString());
-            JsonObjectRequest request = new JsonObjectRequest(Method.POST, "https://qweet-api.herokuapp.com/question", jsonObject,
+            JsonObjectRequest request = new JsonObjectRequest(Method.POST, Constant.BASE_URL + "question", jsonObject,
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {

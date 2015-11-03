@@ -156,7 +156,7 @@ public class PollRecyclerViewAdapter extends RecyclerView.Adapter<PollRecyclerVi
 
     public void vote() {
         if (!selectedId.isEmpty()) {
-            JsonObjectRequest request = new JsonObjectRequest(Request.Method.PUT, "https://qweet-api.herokuapp.com/pollOption/" + selectedId + "/poll",
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.PUT, Constant.BASE_URL + "pollOption/" + selectedId + "/poll",
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {

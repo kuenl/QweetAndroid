@@ -9,7 +9,6 @@ import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -21,6 +20,10 @@ import java.io.OutputStream;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
+/**
+ * An activity for user to draw a picture
+ * Created by Leung Pui Kuen on 17/10/2015.
+ */
 public class CanvasActivity extends AppCompatActivity {
     @Bind(R.id.toolbar)
     Toolbar toolbar;
