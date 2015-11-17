@@ -26,6 +26,7 @@ import com.google.gson.GsonBuilder;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -115,6 +116,12 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
                     NavUtils.navigateUpTo(this, upIntent);
                 }
                 return true;
+            case R.id.top_story:
+                mAdapter.reorder(true);
+                return true;
+            case R.id.most_recent:
+                mAdapter.reorder(false);
+                return true;
         }
         return false;
     }
@@ -149,7 +156,9 @@ public class QuestionRoomActivity extends AppCompatActivity implements OnQueryTe
     private void updateRoom(Room room) {
         if (room != null) {
             toolbar.setTitle(room.getName());
-            mAdapter.changeData(getSearchFilteredList(room.getQuestions()));
+            List<Question> list = getSearchFilteredList(room.getQuestions());
+            Collections.sort(list);
+            mAdapter.changeData(list);
         }
     }
 

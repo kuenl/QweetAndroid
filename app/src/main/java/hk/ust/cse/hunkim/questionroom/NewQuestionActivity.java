@@ -228,7 +228,7 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
         }
     }
 
-    private void leave() {
+    public void leave() {
         //String title = titleEditText.getText().toString().trim();
         String question = mEmojiEditText.getText().toString().trim();
         //if (!title.isEmpty() || !question.isEmpty() || imageBitmap != null || pollItemList.size() > 0) {
@@ -249,7 +249,7 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
         }
     }
 
-    private void submit() {
+    public void submit() {
         //final String title = titleEditText.getText().toString().trim();
         final String message = mEmojiEditText.getText().toString().trim();
         //if (!title.isEmpty() && !message.isEmpty()) {

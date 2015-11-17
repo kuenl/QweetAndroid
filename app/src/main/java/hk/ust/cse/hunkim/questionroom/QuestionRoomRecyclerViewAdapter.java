@@ -19,6 +19,7 @@ import com.android.volley.Response;
 import com.android.volley.toolbox.ImageRequest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -151,7 +152,7 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
             public boolean acceptMatch(CharSequence s, int start, int end) {
                 if (start == 0) {
                     return true;
-                } else if (start > 0) {
+                } else {
                     Pattern pattern = Pattern.compile("[\\s`\\-=\\[\\]\\\\;',.~!@#$%^*()+{}\\|:\"<>?]");
                     Matcher matcher = pattern.matcher(String.valueOf(s.charAt(start - 1)));
                     if (matcher.find()) {
@@ -180,5 +181,11 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
     @Override
     public int getItemCount() {
         return mDataset.size();
+    }
+
+    public void reorder(boolean sortScore) {
+        Question.setSortScore(sortScore);
+        Collections.sort(mDataset);
+        notifyDataSetChanged();
     }
 }

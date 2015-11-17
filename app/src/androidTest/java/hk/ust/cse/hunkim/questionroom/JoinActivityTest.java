@@ -42,9 +42,7 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
         roomNameEditText = (EditText) activity.findViewById(R.id.room_name);
         joinButton = (ImageButton) activity.findViewById(R.id.joinButton);
 
-
-        Class[] cArg = new Class[1];
-        cArg[0] = JSONArray.class;
+        Class[] cArg = {JSONArray.class};
 
         final Method updateAutoCompleteRoomList = activity.getClass().getDeclaredMethod("updateAutoCompleteRoomList", cArg);
         updateAutoCompleteRoomList.setAccessible(true);

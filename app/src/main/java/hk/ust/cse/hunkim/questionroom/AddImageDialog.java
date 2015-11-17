@@ -46,9 +46,9 @@ public class AddImageDialog extends AppCompatDialog {
         setContentView(R.layout.dialog_add_image);
         ButterKnife.bind(this);
         getWindow().setLayout(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        if (new Intent(MediaStore.ACTION_IMAGE_CAPTURE).resolveActivity(context.getPackageManager()) == null) {
+/*        if (new Intent(MediaStore.ACTION_IMAGE_CAPTURE).resolveActivity(context.getPackageManager()) == null) {
             button_take_photo.setVisibility(View.GONE);
-        }
+        }*/
     }
 
     @OnClick({R.id.button_take_photo, R.id.button_choose_image, R.id.button_draw_drawing})
@@ -56,22 +56,23 @@ public class AddImageDialog extends AppCompatDialog {
         switch (v.getId()) {
             case R.id.button_take_photo:
                 Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (takePictureIntent.resolveActivity(context.getPackageManager()) != null) {
-                    // Create the File where the photo should go
-                    File photoFile = null;
-                    try {
-                        photoFile = createImageFile();
-                        // Continue only if the File was successfully created
-                        Uri uri = Uri.fromFile(photoFile);
-                        bundle.putParcelable("data", uri);
-                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
-                                uri);
-                        ((Activity) context).startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                //if (takePictureIntent.resolveActivity(context.getPackageManager()) != null)
+            {
+                // Create the File where the photo should go
+                File photoFile = null;
+                try {
+                    photoFile = createImageFile();
+                    // Continue only if the File was successfully created
+                    Uri uri = Uri.fromFile(photoFile);
+                    bundle.putParcelable("data", uri);
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
+                            uri);
+                    ((Activity) context).startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                break;
+            }
+            break;
             case R.id.button_choose_image:
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("image/*");
@@ -79,9 +80,8 @@ public class AddImageDialog extends AppCompatDialog {
                 break;
             case R.id.button_draw_drawing: {
                 // Create the File where the photo should go
-                File photoFile = null;
                 try {
-                    photoFile = createImageFile();
+                    File photoFile = createImageFile();
                     // Continue only if the File was successfully created
                     Intent drawDrawingIntent = new Intent();
                     Uri uri = Uri.fromFile(photoFile);
@@ -106,16 +106,8 @@ public class AddImageDialog extends AppCompatDialog {
         @SuppressLint("SimpleDateFormat")
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save a file: path for use with ACTION_VIEW intents
-        String mCurrentPhotoPath = "file:" + image.getAbsolutePath();
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
         return image;
     }
 }

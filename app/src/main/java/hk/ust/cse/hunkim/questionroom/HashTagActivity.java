@@ -37,7 +37,7 @@ public class HashTagActivity extends AppCompatActivity {
 
     private DBUtil dbutil;
 
-    private Room mRoom;
+    //private Room mRoom;
 
     @Bind(R.id.toolbar)
     Toolbar toolbar;
@@ -103,6 +103,21 @@ public class HashTagActivity extends AppCompatActivity {
         roomUpdateThread.start();
     }
 
+    private void updateRoom(Room room) {
+        if (room != null) {
+            Pattern hashTagPattern = Pattern.compile("([\\s`\\-=\\[\\]\\\\;',.~!@#$%^*()+{}\\|:\"<>?]|^)" + tag + "([\\s`\\-=\\[\\]\\\\;',\\.\\/~!@#$%^&*()+{}\\|:\"<>?]|$)");
+            Log.d(TAG, hashTagPattern.toString());
+            List<Question> ori = room.getQuestions();
+            List<Question> filtered = new ArrayList<>();
+            for (Question q : ori) {
+                if (hashTagPattern.matcher(q.getMessage()).find()) {
+                    filtered.add(q);
+                }
+            }
+            mAdapter.changeData(filtered);
+        }
+    }
+
     private class RequestRoomTask implements Runnable {
         private Context context;
         private String roomId;
@@ -120,20 +135,11 @@ public class HashTagActivity extends AppCompatActivity {
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
-                                mRoom = new GsonBuilder()
+                                Room mRoom = new GsonBuilder()
                                         .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
                                         .create()
                                         .fromJson(response.toString(), Room.class);
-                                Pattern hashTagPattern = Pattern.compile("([\\s`\\-=\\[\\]\\\\;',.~!@#$%^*()+{}\\|:\"<>?]|^)" + tag + "([\\s`\\-=\\[\\]\\\\;',\\.\\/~!@#$%^&*()+{}\\|:\"<>?]|$)");
-                                Log.d(TAG, hashTagPattern.toString());
-                                List<Question> ori = mRoom.getQuestions();
-                                List<Question> filtered = new ArrayList<>();
-                                for (Question q : ori) {
-                                    if (hashTagPattern.matcher(q.getMessage()).find()) {
-                                        filtered.add(q);
-                                    }
-                                }
-                                mAdapter.changeData(filtered);
+                                updateRoom(mRoom);
                             }
                         }, new Response.ErrorListener() {
                     @Override
@@ -151,5 +157,6 @@ public class HashTagActivity extends AppCompatActivity {
             }
         }
     }
+
 
 }

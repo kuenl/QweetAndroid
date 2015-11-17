@@ -88,8 +88,7 @@ public class QuestionRoomActivityTest extends ActivityInstrumentationTestCase2<Q
 
 
 
-        String jsonStr = "\n" +
-                "{\"questions\":[{\"roomId\":\"5627b9a6f7f5b00300164cd7\",\"headline\":\"q1\",\"message\":\"q1\",\"completed\":false,\"upVote\":0,\"downVote\":0,\"tags\":[],\"createdAt\":\"2015-10-25T23:46:26.573Z\",\"updatedAt\":\"2015-10-25T23:46:26.591Z\",\"id\":\"562d69d230158e0300cf9792\"},{\"roomId\":\"5627b9a6f7f5b00300164cd7\",\"headline\":\"q2\",\"message\":\"q2\",\"completed\":false,\"upVote\":0,\"downVote\":0,\"tags\":[],\"createdAt\":\"2015-10-25T23:47:46.551Z\",\"updatedAt\":\"2015-10-25T23:47:46.691Z\",\"id\":\"562d6a2230158e0300cf9793\"},{\"roomId\":\"5627b9a6f7f5b00300164cd7\",\"headline\":\"q2\",\"message\":\"#q, #i /#i\",\"completed\":false,\"upVote\":0,\"downVote\":0,\"tags\":[],\"createdAt\":\"2015-10-25T23:47:46.551Z\",\"updatedAt\":\"2015-10-25T23:47:46.691Z\",\"id\":\"562d6a2230158e0300cf9794\"}],\"name\":\"dfghjkl\",\"createdAt\":\"2015-10-21T16:13:26.948Z\",\"updatedAt\":\"2015-10-21T16:13:37.522Z\",\"id\":\"5627b9a6f7f5b00300164cd7\"}";
+        String jsonStr = "{\"questions\":[{\"roomId\":\"5627b9a6f7f5b00300164cd7\",\"headline\":\"q1\",\"message\":\"q1\",\"completed\":false,\"upVote\":0,\"downVote\":0,\"tags\":[],\"createdAt\":\"2015-10-25T23:46:26.573Z\",\"updatedAt\":\"2015-10-25T23:46:26.591Z\",\"id\":\"562d69d230158e0300cf9792\"},{\"roomId\":\"5627b9a6f7f5b00300164cd7\",\"headline\":\"q2\",\"message\":\"q2\",\"completed\":false,\"upVote\":0,\"downVote\":0,\"image\":\"\",\"tags\":[],\"createdAt\":\"2015-10-25T23:47:46.551Z\",\"updatedAt\":\"2015-10-25T23:47:46.691Z\",\"id\":\"562d6a2230158e0300cf9793\"},{\"roomId\":\"5627b9a6f7f5b00300164cd7\",\"headline\":\"q2\",\"message\":\"#q, #i /#i\",\"completed\":false,\"upVote\":0,\"downVote\":0,\"image\":\"https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png\",\"tags\":[],\"createdAt\":\"2015-10-25T23:47:46.551Z\",\"updatedAt\":\"2015-10-25T23:47:46.691Z\",\"id\":\"562d6a2230158e0300cf9794\"}],\"name\":\"dfghjkl\",\"createdAt\":\"2015-10-21T16:13:26.948Z\",\"updatedAt\":\"2015-10-21T16:13:37.522Z\",\"id\":\"5627b9a6f7f5b00300164cd7\"}";
         final Room room = new GsonBuilder()
                 .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
                 .create()
@@ -134,13 +133,13 @@ public class QuestionRoomActivityTest extends ActivityInstrumentationTestCase2<Q
         activity.onOptionsItemSelected(na);
     }
 
-/*
+
     public void testHome() {
         CustomMenuItem na  = new CustomMenuItem();
         na.setItemId(android.R.id.home);
         activity.onOptionsItemSelected(na);
     }
-*/
+
     private class CustomMenuItem implements MenuItem {
         private int itemId;
 

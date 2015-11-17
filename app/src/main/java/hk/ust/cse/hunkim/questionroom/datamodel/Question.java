@@ -21,6 +21,8 @@ import hk.ust.cse.hunkim.questionroom.db.DBUtil;
  * Created by Leung Pui Kuen on 7/16/15.
  */
 public class Question implements Comparable<Question> {
+    private static boolean sortScore = true;
+
     private String id;
     private String roomId;
     //private String headline;
@@ -31,6 +33,7 @@ public class Question implements Comparable<Question> {
     private String image;
     private List<PollOption> pollOptions;
     private List<Comment> comments;
+    private double score;
     private Date createdAt;
     private Date updatedAt;
 
@@ -170,6 +173,10 @@ public class Question implements Comparable<Question> {
         return builder.toString();
     }
 
+    public static void setSortScore(boolean sortScore) {
+        Question.sortScore = sortScore;
+    }
+
     /**
      * New one/high echo goes bottom
      *
@@ -178,14 +185,13 @@ public class Question implements Comparable<Question> {
      */
     @Override
     public int compareTo(Question other) {
-        /*
-        if (this.upVote == other.upVote) {
-            if (other.timestamp == this.timestamp) {
-                return 0;
-            }
-            return other.timestamp > this.timestamp ? -1 : 1;
-        }*/
-        return this.upVote - other.upVote;
+        if (sortScore && score != other.score) {
+            return score < other.score ? 1 : -1;
+        }
+        if (!createdAt.equals(other.createdAt)) {
+            return createdAt.getTime() < other.createdAt.getTime() ? 1 : -1;
+        }
+        return 0;
     }
 
     public void vote(final Context context, boolean upVote, final boolean add) {

@@ -1,13 +1,20 @@
 package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -36,9 +43,14 @@ import hk.ust.cse.hunkim.questionroom.datamodel.Question;
 import hk.ust.cse.hunkim.questionroom.db.DBHelper;
 import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 
+import static android.content.Intent.ACTION_VIEW;
+import static android.content.Intent.CATEGORY_DEFAULT;
+
 public class ViewQuestionActivity extends AppCompatActivity {
     private static final String TAG = "ViewQuestionActivity";
 
+    @Bind(R.id.toolbar)
+    Toolbar toolbar;
     //@Bind(R.id.titleTextView)
     //TextView mTitleTextView;
     @Bind(R.id.questionTextView)
@@ -64,10 +76,11 @@ public class ViewQuestionActivity extends AppCompatActivity {
 
     private DBUtil dbUtil;
 
+    private String roomId;
 
     private String questionId;
 
-    private Question mQuestion;
+    //private Question mQuestion;
 
     private Thread mRequestUpdateRunnable;
 
@@ -97,6 +110,9 @@ public class ViewQuestionActivity extends AppCompatActivity {
         mAdapter = new QuestionRoomRecyclerViewAdapter(this, null);
         mRecyclerView.setAdapter(mAdapter);
 */
+
+        setSupportActionBar(toolbar);
+
         DBHelper mDbHelper = new DBHelper(this);
         dbUtil = new DBUtil(mDbHelper);
         mPollAdapter = new PollRecyclerViewAdapter(this);
@@ -108,6 +124,40 @@ public class ViewQuestionActivity extends AppCompatActivity {
         commentRecyclerView.setLayoutManager(new RecyclerViewWrapContentLayoutManager(this));
         commentRecyclerView.setHasFixedSize(true);
         commentRecyclerView.setAdapter(mCommentAdapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_view_question, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent upIntent = NavUtils.getParentActivityIntent(this);
+                if (NavUtils.shouldUpRecreateTask(this, upIntent)) {
+                    Log.d(TAG, "if case");
+                    upIntent.setAction(ACTION_VIEW);
+                    upIntent.addCategory(CATEGORY_DEFAULT);
+                    upIntent.setData(Uri.parse("content://qweet.kuenl.com/room/" + roomId));
+                    TaskStackBuilder.create(this)
+                            .addNextIntentWithParentStack(upIntent)
+                            .startActivities();
+                } else {
+                    Log.d(TAG, "else case");
+                    upIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    NavUtils.navigateUpTo(this, upIntent);
+                }
+                return true;
+            case R.id.item_share:
+                shareTextUrl();
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -123,9 +173,18 @@ public class ViewQuestionActivity extends AppCompatActivity {
         mRequestUpdateRunnable.start();
     }
 
+    private void shareTextUrl() {
+        Intent share = new Intent(android.content.Intent.ACTION_SEND);
+        share.setType("text/plain");
+        share.putExtra(Intent.EXTRA_SUBJECT, "Check out the question in Qweet");
+        share.putExtra(Intent.EXTRA_TEXT, Constant.BASE_URL + "/question/" + questionId);
+        startActivity(Intent.createChooser(share, "Share"));
+    }
+
     private void updateActivity(final Question data) {
         final String id = data.getId();
         //mTitleTextView.setText(data.getHeadline());
+        roomId = data.getRoomId();
         mQuestionTextView.setText(data.getMessage());
         mSummaryTextView.setText(data.getRatingSummary());
         mTimeTextView.setText(DateUtils.getRelativeTimeSpanString(data.getCreatedAt().getTime()));
@@ -209,11 +268,11 @@ public class ViewQuestionActivity extends AppCompatActivity {
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
-                                mQuestion = new GsonBuilder()
+                                Question question = new GsonBuilder()
                                         .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
                                         .create()
                                         .fromJson(response.toString(), Question.class);
-                                updateActivity(mQuestion);
+                                updateActivity(question);
                             }
                         }, new Response.ErrorListener() {
                     @Override

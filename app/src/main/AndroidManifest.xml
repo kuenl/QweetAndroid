@@ -76,6 +76,9 @@
             android:name=".ViewQuestionActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateVisible|adjustResize">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".QuestionRoomActivity" />
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
