@@ -1,6 +1,7 @@
 package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -9,21 +10,28 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
+import hk.ust.cse.hunkim.questionroom.datamodel.Comment;
 import hk.ust.cse.hunkim.questionroom.datamodel.Question;
 import hk.ust.cse.hunkim.questionroom.db.DBHelper;
 import hk.ust.cse.hunkim.questionroom.db.DBUtil;
@@ -37,6 +45,10 @@ public class ViewQuestionActivity extends AppCompatActivity {
     TextView mQuestionTextView;
     @Bind(R.id.pollRecyclerView)
     RecyclerView pollRecyclerView;
+    @Bind(R.id.questionImageView)
+    ImageView questionImageView;
+    @Bind(R.id.commentRecyclerView)
+    RecyclerView commentRecyclerView;
     @Bind(R.id.summaryTextView)
     TextView mSummaryTextView;
     @Bind(R.id.timeTextView)
@@ -47,6 +59,8 @@ public class ViewQuestionActivity extends AppCompatActivity {
     LinearLayout mDislikeButton;
     @Bind(R.id.voteButton)
     Button mVoteButton;
+    @Bind(R.id.commentEditText)
+    EditText commentEditText;
 
     private DBUtil dbUtil;
 
@@ -58,6 +72,7 @@ public class ViewQuestionActivity extends AppCompatActivity {
     private Thread mRequestUpdateRunnable;
 
     private PollRecyclerViewAdapter mPollAdapter;
+    private CommentRecyclerViewAdapter mCommentAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +103,11 @@ public class ViewQuestionActivity extends AppCompatActivity {
         pollRecyclerView.setLayoutManager(new RecyclerViewWrapContentLayoutManager(this));
         pollRecyclerView.setHasFixedSize(true);
         pollRecyclerView.setAdapter(mPollAdapter);
+
+        mCommentAdapter = new CommentRecyclerViewAdapter(this);
+        commentRecyclerView.setLayoutManager(new RecyclerViewWrapContentLayoutManager(this));
+        commentRecyclerView.setHasFixedSize(true);
+        commentRecyclerView.setAdapter(mCommentAdapter);
     }
 
     @Override
@@ -127,6 +147,22 @@ public class ViewQuestionActivity extends AppCompatActivity {
         } else {
             pollRecyclerView.setVisibility(View.GONE);
         }
+
+        if(data.getComments() != null && data.getComments().size() > 0) {
+            mCommentAdapter.changeData(data);
+        }
+
+
+        if (data.getImage() != null && !data.getImage().isEmpty()) {
+            ImageRequest request = new ImageRequest(data.getImage(), new Response.Listener<Bitmap>() {
+                @Override
+                public void onResponse(Bitmap response) {
+                    questionImageView.setImageBitmap(response);
+                }
+            }, 0, 0, null, null);
+            VolleySingleton.getInstance(this).addToRequestQueue(request);
+        }
+
         changeVoteViewState(mLikeButton, dbUtil.contains(id, "upvote"));
         changeVoteViewState(mDislikeButton, dbUtil.contains(id, "downvote"));
         mLikeButton.setTag(id);
@@ -169,7 +205,6 @@ public class ViewQuestionActivity extends AppCompatActivity {
         @Override
         public void run() {
             while (true) {
-                Log.d(TAG, "Polling room object.");
                 JsonObjectRequest request = new JsonObjectRequest(Constant.BASE_URL + "question/" + questionId,
                         new Response.Listener<JSONObject>() {
                             @Override
@@ -193,6 +228,35 @@ public class ViewQuestionActivity extends AppCompatActivity {
                     e.printStackTrace();
                     break;
                 }
+            }
+        }
+    }
+
+    @OnClick(R.id.commentImageButton)
+    public void postComment() {
+        String msg = commentEditText.getText().toString();
+        if (!questionId.trim().isEmpty() && !msg.trim().isEmpty()) {
+            Comment comment = new Comment();
+            comment.setQuestionId(questionId);
+            comment.setMessage(msg);
+            try {
+                JSONObject jsonObject = new JSONObject(new Gson().toJson(comment));
+                JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, Constant.BASE_URL + "comment", jsonObject,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                Log.d(TAG, response.toString());
+                                commentEditText.setText("");
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                });
+                VolleySingleton.getInstance(this).addToRequestQueue(request);
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
         }
     }

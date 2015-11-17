@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore.Images.Media;
 import android.support.design.widget.CoordinatorLayout;
@@ -33,17 +35,27 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.rockerhieu.emojicon.EmojiconGridFragment;
 import com.rockerhieu.emojicon.EmojiconsFragment;
 import com.rockerhieu.emojicon.emoji.Emojicon;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import butterknife.Bind;
@@ -61,6 +73,11 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     private static final String TAG = "NewQuestionActivity";
 
     private String roomId;
+
+    private static final String IMGUR_CLIENT_ID = "...";
+    private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
+
+    private final OkHttpClient client = new OkHttpClient();
 
     @Bind(R.id.activity_new_question_root)
     CoordinatorLayout rootView;
@@ -241,16 +258,12 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
             for (String str : pollItemList) {
                 str = str.trim();
                 if (!str.isEmpty()) {
-                    //PollOption p = new PollOption(str);
-                    //p.setCount((int) Math.random() % 100);
-                    //pollOptions.add(new PollOption(str));
                     pollOptions.add(new PollOption(str));
                 }
             }
             if (pollItemList.size() > 0 && pollOptions.size() < 2) {
                 return;
             }
-            //Question question = new Question(title, message);
             Question question = new Question(message);
             question.setRoomId(roomId);
             question.setPollOptions(pollOptions);
@@ -265,7 +278,16 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
                     new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject response) {
-                            finish();
+                            Toast.makeText(NewQuestionActivity.this, "Question posted.", Toast.LENGTH_SHORT).show();
+                            if (imageBitmap != null) {
+                                Question q = new GsonBuilder()
+                                        .registerTypeAdapter(Date.class, ISO8601UTCDateTypeAdapter.getInstance())
+                                        .create()
+                                        .fromJson(response.toString(), Question.class);
+                                new UploadTask(q.getId()).execute();
+                            } else {
+                                finish();
+                            }
                         }
                     }, new Response.ErrorListener() {
                 @Override
@@ -375,6 +397,61 @@ public class NewQuestionActivity extends AppCompatActivity implements ViewTreeOb
     @Override
     public void onEmojiconClicked(Emojicon emojicon) {
         EmojiconsFragment.input(mEmojiEditText, emojicon);
+    }
+
+    private class UploadTask extends AsyncTask<Void, Void, Void> {
+
+        String questionId;
+        File file;
+
+        public UploadTask(String questionId) {
+            this.questionId = questionId;
+            try {
+                file = new File(NewQuestionActivity.this.getCacheDir(), "image.jpg");
+                file.createNewFile();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                NewQuestionActivity.this.imageBitmap.compress(CompressFormat.JPEG, 80, bos);
+                byte[] bitmapdata = bos.toByteArray();
+                FileOutputStream fos = new FileOutputStream(file);
+                fos.write(bitmapdata);
+                fos.flush();
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if (file != null) {
+                while (true) {
+                    RequestBody requestBody = new MultipartBuilder()
+                            .type(MultipartBuilder.FORM)
+                            .addFormDataPart("image", file.getName(), RequestBody.create(MEDIA_TYPE_PNG, file))
+                            .build();
+
+                    Request request = new Request.Builder()
+                            .url(Constant.BASE_URL + "question/" + questionId + "/image")
+                            .post(requestBody)
+                            .build();
+                    try {
+                        com.squareup.okhttp.Response response = client.newCall(request).execute();
+                        if (response.isSuccessful()) {
+                            return null;
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            Toast.makeText(NewQuestionActivity.this, "Image uploaded.", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
 }

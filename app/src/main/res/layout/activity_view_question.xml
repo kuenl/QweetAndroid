@@ -43,8 +43,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
                     android:paddingTop="8dp">
 
                     <!--
@@ -62,6 +60,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_horizontal"
+                        android:paddingLeft="8dp"
+                        android:paddingRight="8dp"
                         android:paddingTop="8dp"
                         android:textAppearance="?android:attr/textAppearanceMedium"
                         android:textColor="@color/text.light" />
@@ -71,22 +71,36 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="@dimen/activity_vertical_margin"
-                        android:layout_marginTop="@dimen/activity_vertical_margin" />
+                        android:layout_marginTop="@dimen/activity_vertical_margin"
+                        android:paddingLeft="8dp"
+                        android:paddingRight="8dp" />
 
                     <Button
                         android:id="@+id/voteButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@color/colorAccent"
+                        android:paddingLeft="8dp"
+                        android:paddingRight="8dp"
                         android:text="Vote"
                         android:textColor="@color/white"
                         android:visibility="gone" />
+
+                    <ImageView
+                        android:id="@+id/questionImageView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:adjustViewBounds="true"
+                        android:paddingTop="8dp"
+                        android:scaleType="fitCenter" />
 
                     <TextView
                         android:id="@+id/summaryTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentLeft="true"
+                        android:paddingLeft="8dp"
+                        android:paddingRight="8dp"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:textColor="@color/secondary_text.light" />
 
@@ -94,6 +108,8 @@
                         android:id="@+id/timeTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:paddingLeft="8dp"
+                        android:paddingRight="8dp"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:textColor="@color/secondary_text.light" />
 
@@ -173,6 +189,13 @@
                     android:background="@color/divider.light" />
 
 
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/commentRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/divider.light" />
+
+
             </LinearLayout>
         </ScrollView>
 
@@ -194,6 +217,7 @@
                 android:paddingRight="@dimen/activity_horizontal_margin">
 
                 <EditText
+                    android:id="@+id/commentEditText"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
@@ -202,6 +226,7 @@
                     android:hint="Write a comment..." />
 
                 <ImageButton
+                    android:id="@+id/commentImageButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="top"

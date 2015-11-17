@@ -28,6 +28,7 @@ public class Question implements Comparable<Question> {
     private boolean completed;
     private int upVote;
     private int downVote;
+    private String image;
     private List<PollOption> pollOptions;
     private List<Comment> comments;
     private Date createdAt;
@@ -79,6 +80,14 @@ public class Question implements Comparable<Question> {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 
     public boolean isCompleted() {
@@ -179,23 +188,6 @@ public class Question implements Comparable<Question> {
         return this.upVote - other.upVote;
     }
 
-
-    @Override
-    public boolean equals(Object o) {
-        if (o != null && o instanceof Question) {
-            Question other = (Question) o;
-            if (id != null && other.id != null) {
-                return id.equals(other.id);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
-
     public void vote(final Context context, boolean upVote, final boolean add) {
         final DBUtil db = new DBUtil(new DBHelper(context));
         final String action = upVote ? "upvote" : "downvote";
@@ -218,5 +210,21 @@ public class Question implements Comparable<Question> {
             });
             VolleySingleton.getInstance(context).addToRequestQueue(request);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Question question = (Question) o;
+
+        return !(id != null ? !id.equals(question.id) : question.id != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
     }
 }

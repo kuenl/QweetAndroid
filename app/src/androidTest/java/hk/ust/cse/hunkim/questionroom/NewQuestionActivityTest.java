@@ -31,6 +31,22 @@ public class NewQuestionActivityTest extends ActivityInstrumentationTestCase2<Ne
         activity = getActivity();
     }
 
+    public void testEmoji() {
+        onView(withId(R.id.editEmojicon)).perform(click());
+        onView(withId(R.id.insertEmojiButton)).perform(click());
+        onView(withId(R.id.emojiKeyboard)).perform(click());
+        getInstrumentation().runOnMainSync(new Runnable() {
+            @Override
+            public void run() {
+                activity.showKeyboard();
+            }
+        });
+    }
+
+    public void testAddPollItem() {
+        onView(withId(R.id.addPollItemButton)).perform(click());
+    }
+
     public void testCamera() {
         onView(withId(R.id.addImageItem)).perform(click());
         getInstrumentation().waitForIdleSync();
@@ -49,5 +65,4 @@ public class NewQuestionActivityTest extends ActivityInstrumentationTestCase2<Ne
         getInstrumentation().waitForIdleSync();
         onView(withId(R.id.button_draw_drawing)).perform(click());
     }
-
 }

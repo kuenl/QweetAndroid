@@ -2,6 +2,7 @@ package hk.ust.cse.hunkim.questionroom;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -14,6 +15,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.volley.Response;
+import com.android.volley.toolbox.ImageRequest;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -25,7 +29,8 @@ import hk.ust.cse.hunkim.questionroom.datamodel.Question;
 import hk.ust.cse.hunkim.questionroom.db.DBHelper;
 import hk.ust.cse.hunkim.questionroom.db.DBUtil;
 
-import static android.content.Intent.*;
+import static android.content.Intent.ACTION_VIEW;
+import static android.content.Intent.CATEGORY_DEFAULT;
 
 /**
  * Created by Administrator on 23/10/2015.
@@ -46,6 +51,8 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
         //TextView mTitleTextView;
         @Bind(R.id.questionTextView)
         TextView mQuestionTextView;
+        @Bind(R.id.questionImageView)
+        ImageView questionImageView;
         @Bind(R.id.summaryTextView)
         TextView mSummaryTextView;
         @Bind(R.id.timeTextView)
@@ -125,6 +132,15 @@ public class QuestionRoomRecyclerViewAdapter extends RecyclerView.Adapter<Questi
             }
         });
 
+        if (data.getImage() != null && !data.getImage().isEmpty()) {
+            ImageRequest request = new ImageRequest(data.getImage(), new Response.Listener<Bitmap>() {
+                @Override
+                public void onResponse(Bitmap response) {
+                    holder.questionImageView.setImageBitmap(response);
+                }
+            }, 0, 0, null, null);
+            VolleySingleton.getInstance(mContext).addToRequestQueue(request);
+        }
         Linkify.addLinks(holder.mQuestionTextView, Linkify.ALL);
 
         String url = "hash://qweet.kuenl.com/room/" + data.getRoomId();

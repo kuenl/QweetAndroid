@@ -88,6 +88,8 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
         JUnitCore core = new JUnitCore();
         core.run(RoomTest.class);
         core.run(QuestionTest.class);
+        core.run(CommentTest.class);
+        core.run(PollOptionTest.class);
     }
 
     public void testIntentSetting() {
@@ -144,7 +146,7 @@ public class JoinActivityTest extends ActivityInstrumentationTestCase2<JoinActiv
         TouchUtils.clickView(this, joinButton);
 
     }
-    
+
 /*
     public void testUpdateAutoCompleteRoomList() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, NoSuchFieldException, JSONException {
         Class[] cArg = new Class[1];

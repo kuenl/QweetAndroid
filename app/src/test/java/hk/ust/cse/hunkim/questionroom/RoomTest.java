@@ -65,11 +65,25 @@ public class RoomTest extends TestCase {
     @SmallTest
     public void testEqual() {
         assertEquals("Equal", true, r.equals(r));
-        assertEquals("Equal", false, r.equals(0));
-        Room o = new Room();
+
         assertEquals("Equal", false, r.equals(null));
+
+        assertEquals("Equal", false, r.equals(0));
+
+        Room o = new Room();
+        r.setId(null);
+        o.setId(null);
+        assertEquals("Equal", true, r.equals(o));
+        r.setId(null);
+        o.setId("0");
+        assertEquals("Equal", false, r.equals(o));
+        r.setId("0");
+        o.setId(null);
+        assertEquals("Equal", false, r.equals(o));
+        r.setId("Id");
         o.setId("Id");
         assertEquals("Equal", true, r.equals(o));
+        r.setId("Id");
         o.setId("id");
         assertEquals("Equal", false, r.equals(o));
     }

@@ -85,21 +85,26 @@ public class QuestionTest extends TestCase {
 
     @SmallTest
     public void testEqual() {
+        assertEquals("Equal", true, q.equals(q));
+
         assertEquals("Equal", false, q.equals(null));
+
         assertEquals("Equal", false, q.equals(0));
+
         Question o = new Question();
         q.setId(null);
         o.setId(null);
-        assertEquals("Equal", false, q.equals(o));
-        q.setId("Id");
-        o.setId(null);
-        assertEquals("Equal", false, q.equals(o));
+        assertEquals("Equal", true, q.equals(o));
         q.setId(null);
-        o.setId("Id");
+        o.setId("0");
+        assertEquals("Equal", false, q.equals(o));
+        q.setId("0");
+        o.setId(null);
         assertEquals("Equal", false, q.equals(o));
         q.setId("Id");
         o.setId("Id");
         assertEquals("Equal", true, q.equals(o));
+        q.setId("Id");
         o.setId("id");
         assertEquals("Equal", false, q.equals(o));
     }
@@ -107,6 +112,8 @@ public class QuestionTest extends TestCase {
     @SmallTest
     public void testHashCode() {
         assertEquals("Equal", q.getId().hashCode(), q.hashCode());
+        Question q2 = new Question();
+        assertEquals("Equal", q2.hashCode(), 0);
     }
 
     @SmallTest
